@@ -1,0 +1,49 @@
+# CFP file - Mode
+1
+# Conduit data for mode 1 and 3
+# (nnodes, npipes, nlayers)
+5 4 3
+# Water temperature
+25.0
+# Node number, column, row, layer, neighbor node numbers, connected pipe numbers (no_n, mc, mr, ml, nb1, nb2, nb3, nb4, nb5, nb6, pb1, pb2, pb3, pb4, pb5, pb6)
+1 2 2 1 3 0 0 0 0 0 1 0 0 0 0 0
+2 1 3 1 3 0 0 0 0 0 2 0 0 0 0 0
+3 2 3 1 1 4 2 0 0 0 1 3 2 0 0 0
+4 3 3 1 5 3 0 0 0 0 4 3 0 0 0 0
+5 4 3 1 4 0 0 0 0 0 4 0 0 0 0 0
+# Geoheight
+# Option 1: Node number (no_n), elevation (one line per node)
+# Option 2: Total number of nodes (nnodes), elevation (one line for all nodes)
+1 4.50
+2 4.50
+3 4.50
+4 4.50
+5 4.50
+# Pipe conductance (sa_exchange)
+1
+# Convergence criterion (epsilon)
+1e-06
+# Maximum number of iterations (niter)
+100
+# Step length of iterations (relax)
+1.0
+# Print flag (p_nr)
+1.0
+# Conduit parameters
+# Pipe number, diameter, tortuosity, roughness, lower critical Reynolds number, upper critical Reynolds number (no_p, diameter, tortuosity, rheight, lcritrey_p, tcritrey_p)
+1 0.1 1.0 0.01 10.0 20.0
+2 0.1 1.0 0.01 10.0 20.0
+3 0.1 1.0 0.01 10.0 20.0
+4 0.1 1.0 0.01 10.0 20.0
+# Node heads (no_n, n_head)
+1 -1.0
+2 20.0
+3 -1.0
+4 -1.0
+5 -1.0
+# Node number, pipe conductance (no_n, k_exchange; sa_exchange = 0) or conduit wall permeability (sa_exchange = 1)
+1 5.0
+2 5.0
+3 5.0
+4 5.0
+5 5.0
