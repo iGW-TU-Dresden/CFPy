@@ -58,9 +58,4 @@ Karst Simulation with MODFLOW-CFP
 	- use the methods in the CFPy.postprocessing module to obtain and pro-
 		cess CFP-specific results (node- and tube- related data)
 
-NOTE: all steps are shown in the two example notebooks!
-	in pyKasso_CFPy_coupling.ipynb, the general coupling of pyKasso and CFPy
-	is explained.
-	in CFPy_FloPy-PyKasso.ipynb, all steps - from generating a network with
-	pyKasso to simulating the model with FloPy and post-processing the re-
-	sults - are shown and documented
+NOTE: all steps are shown in the example notebooks!
