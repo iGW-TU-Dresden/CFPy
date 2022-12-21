@@ -94,12 +94,10 @@ class FileReader(Postprocessor):
 		variables with each row representing a single time step.
 		
 		:: Parameters ::
-		node_num : an integer or a list of integers specifying the
-			node numbers for which to obtain results for, integer or
-			list-like
-		tube_num : an integer or a list of integers specifying the
-			tube numbers for which to obtain results for, integer or
-			list-like
+		node_num : an integer specifying the
+			node number for which to obtain results for, integer
+		tube_num : an integer specifying the
+			tube number for which to obtain results for, integer
 
 		:: Returns ::
 		node_df : a pandas DataFrame containing all node state variables
