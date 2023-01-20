@@ -94,10 +94,12 @@ class FileReader(Postprocessor):
 		variables with each row representing a single time step.
 		
 		:: Parameters ::
-		node_num : an integer specifying the
-			node number for which to obtain results for, integer
-		tube_num : an integer specifying the
-			tube number for which to obtain results for, integer
+		node_num : an integer or a list of integers specifying the
+			node numbers for which to obtain results for, integer or
+			list-like
+		tube_num : an integer or a list of integers specifying the
+			tube numbers for which to obtain results for, integer or
+			list-like
 
 		:: Returns ::
 		node_df : a pandas DataFrame containing all node state variables
@@ -178,8 +180,8 @@ class FileReader(Postprocessor):
 		if self.tube_num is not None:
 			tube_lines = []
 			for num, line in enumerate(self.list_lines):
-				# find the location where tube data is given
-				if "TUBE  B  E" in line:
+				# find the location where tube data is given; use the following string to find the data in the model listing file           2023 01 20 !TR: Modified the search string and added explanation
+				if "TUBE    B    E" in line:
 					# append the line corresponding to the desired tube
 					tube_lines.append(self.list_lines[num + self.tube_num])
 
@@ -201,7 +203,7 @@ class FileReader(Postprocessor):
 				)
 
 			# remove temporary file
-			if os.path.exists("temp_tube.csv"):
-				os.remove("temp_tube.csv")
+			#if os.path.exists("temp_tube.csv"):
+			#	os.remove("temp_tube.csv")
 
 		return node_df, tube_df
