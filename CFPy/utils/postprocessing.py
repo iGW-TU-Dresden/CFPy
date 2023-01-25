@@ -94,10 +94,12 @@ class FileReader(Postprocessor):
 		variables with each row representing a single time step.
 		
 		:: Parameters ::
-		node_num : an integer specifying the
-			node number for which to obtain results for, integer
-		tube_num : an integer specifying the
-			tube number for which to obtain results for, integer
+		node_num : an integer or a list of integers specifying the
+			node numbers for which to obtain results for, integer or
+			list-like
+		tube_num : an integer or a list of integers specifying the
+			tube numbers for which to obtain results for, integer or
+			list-like
 
 		:: Returns ::
 		node_df : a pandas DataFrame containing all node state variables
@@ -178,31 +180,10 @@ class FileReader(Postprocessor):
 		if self.tube_num is not None:
 			tube_lines = []
 			for num, line in enumerate(self.list_lines):
-				# find the location where tube data is given
-				#    here, we iterate over all lines in the LIST file and look
-				#    if the string "TUBE  B  E" is present in the current line
-				#    if yes, save the line below this string that corresponds 
-				# 	 to the currently checked tube number												MR 2023/01/20
-				if "TUBE  B  E" in line:
-					# handle the case when there is the warning:
-					# 	"WARNING! TUBE X ACTIVE BUT NO FLOW" somewhere in the 
-					# 	reported results
-					if "WARNING!" in self.list_lines[num:num + self.tube_num * 2]:						# MR 2023/01/22
-						# we have to decide whether we want to raise an error here or just
-						#	print out a warning
-						# raise ValueError("Warning! There are active tubes with no flow!")				
-						print("Warning! There are active tubes with no flow!")
-
-					# if this warning is in the current line and it corresponds to the tube
-					# 	number, we just go to the next line and append the value (which is
-					#	always 0.0 in this case)
-					if ("WARNING!" in self.list_lines[num + self.tube_num] and
-						str(self.tube_num) in self.list_lines[num + self.tube_num]):
-						tube_lines.append(self.list_lines[num + self.tube_num + 1])
-
-					else:
-						# append the line corresponding to the desired tube
-						tube_lines.append(self.list_lines[num + self.tube_num])
+				# find the location where tube data is given; use the following string to find the data in the model listing file           2023 01 20 !TR: Modified the search string and added explanation
+				if "TUBE    B    E" in line:
+					# append the line corresponding to the desired tube
+					tube_lines.append(self.list_lines[num + self.tube_num])
 
 			# write relevant lines to a temporary file
 			with open("temp_tube.csv", "w") as file:
@@ -222,7 +203,7 @@ class FileReader(Postprocessor):
 				)
 
 			# remove temporary file
-			if os.path.exists("temp_tube.csv"):
-				os.remove("temp_tube.csv")
+			#if os.path.exists("temp_tube.csv"):
+			#	os.remove("temp_tube.csv")
 
 		return node_df, tube_df
