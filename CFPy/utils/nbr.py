@@ -26,15 +26,19 @@ class nbr():
         self.bot_elev = []
         self.bot_elev2 = []
         self.cond_elev = []
+        self.lines = []
         
     def nbr_read(self):
         
         tic1 = time.time()
         
+        # check if line list is empty - if not, make a new empty list
+        if len(self.lines) > 0:
+            self.lines = []
+
         # Search and list .nbr files found in the working directory.
         self.nbr_file = [file for file in os.listdir('.') if file.endswith('.nbr')]
         
-        lines = []
         read_count = 0
         
         # If a single .nbr file is found, read the file and append each line that does not begin with '#' to a list.
@@ -45,7 +49,7 @@ class nbr():
                         # count comment lines
                         read_count += 1
                     else:
-                        lines.append(line.split())
+                        self.lines.append(line.split())
         
         # Exit, if no .nbr file is found.
         elif len(self.nbr_file) == 0:
@@ -60,12 +64,16 @@ class nbr():
         #     of the .nbr-file (number of layers, NUMBER OF NODE PLANES)
         #     otherwise, line 2 has only one character and gets appended,
         #     which is not what we want
-        for line in lines:
+        for line in self.lines:
+            # we only have a single value in a line if it is a spatially
+            #   constant elevation
             if len(line) == 1:
                 self.bot_elev.append(line[0])
                 read_count -= 1
-        nlays = int(lines[1][0])
-        nplanes = int(lines[1][1])
+        # the second line (index 1 ) always contains the number of layers
+        #   and the number of node planes
+        nlays = int(self.lines[1][0])
+        nplanes = int(self.lines[1][1])
 
         # Remove top/bottom elevations that were added to 'bot_elev' from 'lines'.
         # remove already used lines from list of lines
@@ -77,20 +85,21 @@ class nbr():
         if len(self.bot_elev) > 0:
             # + 2 because first two lines contain information as well
             #     but are not used
-            del lines[0:len(self.bot_elev) + 2]
+            del self.lines[0:len(self.bot_elev) + 2]
 
         # NEW
         # if bot_elev does NOT contain values (i.e. no single values as layer elevations are used)
         # delete the first two lines (nrows / ncols & nlays / nplanes)
         else:
-            del lines[0:2]
+            del self.lines[0:2]
         
         # Split 'lines' into lists of equal sizes; total number of lists is defined by 'read_count'.        
-        lines = [lines[i:i+int(len(lines)/read_count)] for i in range(0, len(lines), int(len(lines)/read_count))]
+        self.lines = [self.lines[i:i+int(len(self.lines)/read_count)] for i in range(0, len(self.lines),
+            int(len(self.lines)/read_count))]
 
         # If list 'bot_elev' has already been defined and removed from 'lines', 'cond_elev' = 'lines'.
         if len(self.bot_elev) > 0:
-            self.cond_elev = lines
+            self.cond_elev = self.lines
         
         # If list 'bot_elev' has not yet been defined (i.e., top/bottom elevations are not given as single values),
         # append each list element in 'lines' that contains a negative value (i.e., inactive conduit cell) 
@@ -111,11 +120,11 @@ class nbr():
             #         break
 
             # use number of layers and number of planes information to fill cond_elev and bot_elev
-            self.cond_elev = lines[-nplanes:]
+            self.cond_elev = self.lines[-nplanes:]
 
         # Define bot_elev as all elements of list 'lines' that have not previously been added to 'cond_elev'.
         if len(self.bot_elev) == 0:
-            self.bot_elev = lines[0:len(lines)-len(self.cond_elev)]
+            self.bot_elev = self.lines[0:len(self.lines)-len(self.cond_elev)]
             
         # If single values are given as bottom elevation, extent the list element to the size of 'cond_elev'
         if isinstance(self.bot_elev[0], list) == False:
@@ -246,7 +255,7 @@ class nbr():
 
         ##############################################################################
         # In the following two loops there is the difference to the "old" version:
-        # contrary to the old version here now it gets correctly checked if two nodes
+        # contrary to the old version, here it now gets correctly checked if two nodes
         #   are vertically connected (case happens if one has two node planes which
         #   are vertically connected at one or multiple locations by a leading "c")
         ##############################################################################
