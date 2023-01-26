@@ -79,19 +79,19 @@ To run the examples, make sure that the `CFPy` package directory (the `CFPy` fol
 
     - **NOTE**: Right now, `pyKasso` can only generate 2D karst networks. However, multiple (vertically connected) node planes can be given to `CFPy`. To give the 2D network some 3D structure nonetheless, node elevations need to be given to `CFPy`. Those elevations can be uniform or non- uniform. Also, multiple 2D node planes (with each different uniform or non-uniform node elevations) can be connected vertically. See the `pyKasso_CFPy_coupling.ipynb` notebook for more information.
 
-(3) Coupling `pyKasso` and `CFPy`
+3. Coupling `pyKasso` and `CFPy`
     - **NOTE**: `CFPy` generally relies on one single input-file, where all neccessary information is summarized (domain discretization, number of node planes, MODFLOW layer elevations, node network and elevations). This file can either be generated automatically with the `generate_nbr` method of the `CFPy.preprocessing` module (preferred option) or can also be generated manually
     - use the `pyKassoValidator` object in the `CFPy.preprocessing` module to validate the node network generated with `pyKasso` in step (2); provide node elevation information in this step
     - option 1 (preferred option): generate the `CFPy` input information (the `.nbr`-file) automatically via the `generate_nbr` method in the `CFPy.preprocessing` module (providing the `pyKasso.SKS` catchment as well as domain discretization and layer elevation information)
     - option 2: or generate the `.nbr`-file manually (also see the `pyKasso_CFPy_coupling.ipynb` notebook for more information) by exporting the validated network and copying to the `.nbr`-file
 
-(4) Set Up the MODFLOW-CFP Model with `CFPy` and `FloPy`
+4. Set Up the MODFLOW-CFP Model with `CFPy` and `FloPy`
     - create the model with `FloPy` (using a MODFLOW-CFP distribution, preferrably the `cfpv2.exe` version distributed by TU Dresden)
     - create all input-files for CFP with `CFPy` based on the `.nbr`-file generated in step (3)
     - create the remaining input-files for MODFLOW with `FloPy`
     - simulate the model with `FloPy` (`model.run_model` method)
 
-(5) Post-Processing of Results
+5. Post-Processing of Results
     - use `FloPy` post-processing methods to process classical MODFLOW results such as matrix head information etc.
     - use the methods in the `CFPy.postprocessing` module to obtain and process CFP-specific results (node- and tube- related data)
 
