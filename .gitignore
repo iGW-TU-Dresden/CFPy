@@ -1,4 +1,4 @@
 .idea
 __pycache__
-build/
-CFPy.egg-info/
+build/*
+CFPy.egg-info/*
