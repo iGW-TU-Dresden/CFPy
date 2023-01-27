@@ -1,0 +1,18 @@
+Metadata-Version: 2.1
+Name: CFPy
+Version: 0.1
+Summary: a Python package for the generation of MODFLOW-CFP specific input files (.cfp, .crch, .coc). CFPy is the FloPy-equivalent package for MODFLOW-CFP.
+Home-page: https://github.com/iGW-TU-Dresden/CFPy
+Author: M.G. Rudolph, T. Noffz, L. Grabow, T. Reimann
+Author-email: max_gustav.rudolph@tu-dresden.de, thomas.reimann@tu-dresden.de
+License: CC0 1.0 Universal
+Platform: Windows
+Platform: Linux
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Other Audience
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Topic :: Scientific/Engineering :: Hydrology
+License-File: LICENSE

@@ -6,13 +6,11 @@ If you want to contribute to the package (e.g., changing the code or adding exam
 
 ### Dependencies:
 - `python` >= 3.9, < 3.11
-- `numpy`>= 1.18.5
-- `matplotlib`>= 3.3.4
-- `pykasso`>= 0.1.0
-- `re`>= 2.2.1
+- `numpy`>= 1.18.5, <1.25.0
+- `matplotlib`>= 3.3.4, <3.6.0
+- `pykasso`= 0.1.0
 - `pandas`>= 1.2.1
 - `flopy`>= 3.3.3
-- `sys`>= 3.8.5
 
 See the beginning of the individual example notebooks for more information on `Python` and package versions.
 
