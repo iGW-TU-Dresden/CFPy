@@ -1,4 +1,4 @@
-# CFPy_TUD
+# CFPy
 CFPy - a Python package for the generation of MODFLOW-CFP specific input files (.cfp, .crch, .coc). CFPy is the FloPy-equivalent package for MODFLOW-CFP.
 
 ### Contributing:
@@ -13,6 +13,11 @@ If you want to contribute to the package (e.g., changing the code or adding exam
 - `flopy`>= 3.3.3
 
 See the beginning of the individual example notebooks for more information on `Python` and package versions.
+
+# Installation
+
+Download the source code as `.zip` and unpack it on your machine. In the command line (or in the `Anaconda Prompt` / `Anaconda PowerShell Prompt`) navigate to the unpacked folder (e.g., `C:\User\...\CFPy-main`). Install the package via `pip install .` (don't forget the "." at the end).
+You can use / set up a new virtual environment with the environment file (`cfpy_env.yml`) prior to installing `CFPy`, which contains all required dependencies. Note, however, that **`pyKasso` and `karstnet` are not available on `PyPI` and have to be installed from source**!
 
 # CFPy_Examples:
 Note: make sure you have pyKasso (and its dependencies) installed if you want to use the full functionality of CFPy!
