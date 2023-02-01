@@ -16,8 +16,8 @@ See the beginning of the individual example notebooks for more information on `P
 
 # Installation
 
+You can use / set up a new virtual environment with the environment file (`cfpy_env.yml`) prior to installing `CFPy`, which contains all required dependencies. Note, however, that **`pyKasso` and `karstnet` are not available on `PyPI` and have to be installed from source**! If you have an environment with all the dependencies available, activate it (`conda activate myEnvironment`, replace `myEnvironment` with your environment name). Afterwards you can install `CFPy`.
 Download the source code as `.zip` and unpack it on your machine. In the command line (or in the `Anaconda Prompt` / `Anaconda PowerShell Prompt`) navigate to the unpacked folder (e.g., `C:\User\...\CFPy-main`). Install the package via `pip install .` (don't forget the "." at the end).
-You can use / set up a new virtual environment with the environment file (`cfpy_env.yml`) prior to installing `CFPy`, which contains all required dependencies. Note, however, that **`pyKasso` and `karstnet` are not available on `PyPI` and have to be installed from source**!
 
 # CFPy_Examples:
 Note: make sure you have pyKasso (and its dependencies) installed if you want to use the full functionality of CFPy!
