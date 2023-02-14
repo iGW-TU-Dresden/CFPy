@@ -1,4 +1,4 @@
-![CFPy - a Python package for the generation of MODFLOW-CFP specific input files (.cfp, .crch, .coc). CFPy is the FloPy-equivalent package for MODFLOW-CFP.]
+![CFPy - a Python package for the generation of MODFLOW-CFP specific input files (.cfp, .crch, .coc). CFPy is the FloPy-equivalent package for MODFLOW-CFP.](https://github.com/iGW-TU-Dresden/CFPy/blob/main/logo.png)
 
 # CFPy
 
