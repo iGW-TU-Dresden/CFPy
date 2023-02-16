@@ -1,0 +1,32 @@
+# COC file
+# Number of nodes for output (nnodes)
+11
+# Node numbers, one per line (node_numbers)
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+# Node output each n time steps (n_nts)
+1
+# Number of conduits for output (npipes)
+10
+# Conduit numbers, one per line (pipe_numbers)
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+# Conduit output each n time steps (t_nts)
+1

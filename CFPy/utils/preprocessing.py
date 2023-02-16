@@ -33,6 +33,8 @@ class Preprocessor():
 
 	def __init__(self, network=None, elevations=None, flopymodel=None):
 		"""
+		Arguments
+		---------
 		network : if the GeneralValidator will be used: a 2D numpy array of shape
 			(n_rows, n_cols) representing the node network, numpy ndarray;
 			if the pyKassoValidator will be used: a pyKasso.SKS()-catchment
@@ -67,9 +69,12 @@ class Preprocessor():
 		
 		"""
 		Export the validated network to a separate text file given by the path argument.
-
 		The contents of the text file can be directly included in the .nbr-file, which
 		is used by CFPy at later stages.
+
+		Arguments
+		---------
+		path : the path to the directory in which the file should be saved
 
 		NOTE: during execution, the network array is already structured to fit the
 		requirements of CFPy: zeros (0.) are replaced with -999. Take into account that

@@ -10,8 +10,7 @@ class cfp():
     """
     Dependencies: None
 
-    Input Variables of the MODFLOW CFP CFP Module:
-        
+    Input Variables / Lines of the MODFLOW CFP Module (.cfp file):
         0, 2, 3, 5, 7, 9, 10, 11, 13, 15, 17, 19, 21, 23, 24, 26, 28, 30, 31, 33, 35, 37, 38: Comment lines
         1: mode - is an integer value controlling the activation of conduit pipes and (or) layers
         4: nnodes - is an integer value for the total number of nodes in the conduit pipe network. Each node is located at the center of a model cell in plan view.
@@ -39,7 +38,6 @@ class cfp():
         36: ltemp - is the mean water temperature in degrees Celsius of all conduit layers.
         39: void lcritrey_l tcritrey_l - are real numbers for each conduit flow layer.
         
-        # INPUT VARIABLES of the CFPy.cfp.cfp module
         # mode: CFP mode, int
         # nnodes: number of nodes (get from nbr output), int
         # npipes: number of pipes (get from nbr output), int
