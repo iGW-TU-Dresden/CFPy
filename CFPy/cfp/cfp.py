@@ -134,10 +134,29 @@ class cfp():
             flow layer.    
     """
     
-    def __init__(self, mode, nnodes, npipes, nlay, nbr_data=0, geoheight=0,
-                 sa_exchange=0, epsilon=0, niter=0, relax=0, p_nr=0,
-                 cond_data=0, n_head=0, k_exchange=0, ncl=0, cl=0, ltemp=0,
-                 condl_data=0, cads=None, fbc=None):
+    def __init__(
+        self,
+        mode,
+        nnodes,
+        npipes,
+        nlay,
+        nbr_data=0,
+        geoheight=0,
+        sa_exchange=0,
+        epsilon=0,
+        niter=0,
+        relax=0,
+        p_nr=0,
+        cond_data=0,
+        n_head=0,
+        k_exchange=0,
+        ncl=0,
+        cl=0,
+        ltemp=0,
+        condl_data=0,
+        cads=None,
+        fbc=None
+        ):
         
         self.mode = str(mode)
         self.nnodes = str(nnodes)
