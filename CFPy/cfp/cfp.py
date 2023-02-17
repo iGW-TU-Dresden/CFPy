@@ -8,110 +8,135 @@ import warnings
 
 class cfp():
     """
+    This class handles the writing of the .cfp input file for MODFLOW CFP.
+
     Dependencies: None
+    
+    Attributes
+    ----------
+    mode : CFP mode; int
+    nnodes : number of nodes (get from nbr output, see the CFPy.utils.nbr
+        module); int
+    npipes : number of pipes (get from nbr output, see the CFPy.utils.nbr
+        module); int
+    nlay : number of MODFLOW layers; int
+    nbr_data : data as returned from the CFPy.utils.nbr module; list
+    geoheight : absolute height of nodes (use cond_elev from CFPy.utils.nbr
+        module output), list
+    sa_exchange : flag (if 0: user assigns pipe conductance
+        for each node, if 1: user assigns conduit wall 
+        permeability); int
+    epsilon : convergence criterion; float
+    niter : maximum number of iterations, int
+    relax : relaxation parameter 0 < relax < 1, float
+    p_nr : flag (if 0: iteration results are not printed, if 1: iteration
+        results are printed), int
+    cond_data : conduit parametrization data (list-like), has to contain list-
+        likes for NO_P, DIAMETER, TORTUOSITY, RHEIGHT, LCRITREY_P, and
+        TCRITREY_P in that order, i.e. [[0, 1, ...], [0.1, 1.0, ...], ...];
+        list-like
+    n_head : pre-defined node heads as list-like with length nnodes, where -1
+        indicates that the head should be calculated and other values define a
+        fixed head, e.g., [-1, 20.1, ...]; list-like 
+    k_exchange : conduit conductances or wall permeabilities as list like with
+        length npipes; list-like of floats
+    ncl : total number of conduit layers (HAS NO EFFECT AT THE MOMENT); int
+    cl : list specifying which MODFLOW layers are conduit layers (HAS NO EFFECT
+        AT THE MOMENT); list-like of ints
+    ltemp : mean water temperature; float
+    condl_data : conduit layer parametrization data (list-like), has to contain
+        list-likes for VOID, LCRITREY_L, and TCRITREY_L in that order; list-like
+        (NOT IMPLEMENTED)
+    cads : CADS parametrization data, either None if CADS is not considered or
+        list-like with length npipes containing the CADS width for each pipe;
+        list-like of floats or None
+    fbc: FBC (further boundary conditions) parameterization data, either None if
+        FBC are not considered or list of tuples for each node where an FBC is
+        set (see notes below); list of tuples or None
+
+    NOTE (fbc):
+        There are multiple types of FBCs:
+            - fixed head-limited flow boundary (FHLQ)
+                - value (below) is a float representing the flow limitation
+                    (i.e., a flow rate)
+                - example: [(1, "FHLQ", 0.75), (...), ...]
+            - conduit well boundary (WELL)
+                - value (below) is None (the flow rate for the node has to
+                    be given in the CFPy.cfp.crch module)
+                - example: [(1, "WELL", None), (...), ...]
+            - Cauchy boundary (CAUCHY)
+                - value (below) is a tuple for the Cauchy conductivity and
+                    the Cauchy limited inflow; the node head represents the
+                    Cauchy head if this type of FBC is used
+                - example: [(1, "CAUCHY", (0.01, 0.04)), (...), ...]
+            - limited head boundary (LH)
+                - value (below) is None (the head specified for the node
+                    represents the limited head)
+                - example: [(1, "LH", None), (...), ...]
+            - time-dependent boundary (TD) - NOT IMPLEMENTED
+                - value (below) is ...
+        
+        Specify FBCs via a list of tuples of the form:
+        [(node_number, FBC_type, value), (...), ...], e.g.,
+        [(1, "WEL", {1: -0.25, 2: -0.25, ...})]
 
     Input Variables / Lines of the MODFLOW CFP Module (.cfp file):
-        0, 2, 3, 5, 7, 9, 10, 11, 13, 15, 17, 19, 21, 23, 24, 26, 28, 30, 31, 33, 35, 37, 38: Comment lines
-        1: mode - is an integer value controlling the activation of conduit pipes and (or) layers
-        4: nnodes - is an integer value for the total number of nodes in the conduit pipe network. Each node is located at the center of a model cell in plan view.
-           npipes - is an integer value for the total number of pipes in the conduit network.
+        0, 2, 3, 5, 7, 9, 10, 11, 13, 15, 17, 19, 21, 23, 24, 26, 28, 30, 31,
+            33, 35, 37, 38: Comment lines
+        1 : mode - is an integer value controlling the activation of conduit
+            pipes and (or) layers
+        4 : nnodes - is an integer value for the total number of nodes in the
+                conduit pipe network. Each node is located at the center of a
+                model cell in plan view.
+            npipes - is an integer value for the total number of pipes in the
+                conduit network.
            nlayers - is an integer value for the total number of model layers.
-        6: temperature - is a real number in degrees Celsius, representing the average temperature of ground water in the conduit pipes.
-        8: no_n mc mr ml nb1 nb2 nb3 nb4 nb5 nb6 pb1 pb2 pb3 pb4 pb5 pb6 - are integer values that describe how the nodes are connected to the MODFLOW model cells, 
-           and how node and pipe connections are formed.
-        12: geoheight - is the absolute elevation of the pipe nodes.
-        14: sa_exchange - is an integer that equals either 0 or 1.
-            If sa_exchange = 0, the user assigns the pipe conductance for each node in the CFP Input File.
-            If sa_exchange = 1, the user assigns the conduit wall permeability, and the CFP will compute the surface areas of pipes when assembling pipe conductances.
-        16: epsilon - is a real number for the convergence criterion of the Newton-Raphson iteration for pipe flow equations. Use a very small number, such as 0.000001.
-        18: niter - is an integer number for the maximum number of Newton-Raphson iterations. If convergence cannot be achieved, the program will stop 
-            and a warning will be printed in the MODFLOW listing file.
-        20: relax - is a real number of relaxation that determines the step length of the Newton-Raphson iterations. 
-            Changing relax to a value slightly less than 1.0 may facilitate convergence of the pipe flow equations.
-        22: p_nr - is an integer print flag for Newton Raphson 22. iterations.
-        25: no_p diameter tortuosity rheight lcritrey_p tcritrey_p - are the pipe numbers and hydraulic properties.
-        27: no_n n_head - are integer node numbers and either node constant heads or a flag that activates a CFP solution for node head. Use one line for each node.
-        29: no_n k_exchange - are integer node numbers and real numbers for either conduit wall permeabilities (when sa_exchange=1) 
-            or pipe conductances (when sa_exchange=0), one line for each node.
-        32: ncl - is an integer equal to the total number of conduit layers.
-        34: cl - is a one-dimensional integer array entered on a single line of the CFP Input File. This array holds the MODFLOW layer numbers that are conduit layers.
-        36: ltemp - is the mean water temperature in degrees Celsius of all conduit layers.
-        39: void lcritrey_l tcritrey_l - are real numbers for each conduit flow layer.
-        
-        # mode: CFP mode, int
-        # nnodes: number of nodes (get from nbr output), int
-        # npipes: number of pipes (get from nbr output), int
-        # nlay: number of MODFLOW layers, int
-        # nbr_data: data as returned from nbr, list
-        # geoheight: absolute height of nodes 
-        #     (use cond_elev from nbr output), list
-        # sa_exchange: flag (if 0: user assigns pipe conductance
-        #     for each node, if 1: user assigns conduit wall 
-        #     permeability), int
-        # epsilon: convergence criterion, float
-        # niter: maximum number of iterations, int
-        # relax: relaxation parameter 0 < relax < 1, float
-        # p_nr: flag (if 0: iteration results are not printed,
-        #     if 1: iteration results are printed), int
-        # cond_data: conduit parametrization data,
-        #     has to contain one line for each pipe
-        #     containing (NO_P, DIAMETER, TORTUOSITY, RHEIGHT, 
-        #     LCRITREY_P, TCRITREY_P), list
-        # n_head: node heads (one line for each node with
-        #     NO_N, N_HEAD - if N_HEAD = -1, head gets 
-        #     calculated), list
-        # k_exchange: conduit conductances or wall permeabilities
-        #     (one line for each pipe NO_P K_EXCH), list
-        # ncl: total number of conduit layers (not needed for
-        #     mode 3), int
-        # cl: list specifying which MODFLOW layers are conduit
-        #     layers, list
-        # ltemp: mean water temperature, float
-        # condl_data: conduit layer parametrization data,
-        #     has to contain one line for each conduit layer
-        #     containing (VOID, LCRITREY_L, TCRITREY_L) with
-        #     VOID being the mean void diameter, list
-        # cads: CADS parametrization data; either None if CADS is
-        #     not considered or list of length npipes parameterizing
-        #     the CADS width for each pipe, list (of floats)
-        # fbc: FBC parameterization data; either None if FBC
-        #     are not considered or list of tuples for each
-        #     node where an FBC is set; list of tuples
-
-        NOTE (fbc):
-            There are multiple types of FBCs:
-                - fixed head-limited flow boundary (FHLQ)
-                    - value (below) is a float representing the flow limitation
-                        (i.e., a flow rate)
-                    - example: [(1, "FHLQ", 0.75), (...), ...]
-                - conduit well boundary (WELL)
-                    - value (below) is None (the flow rate for the node has to
-                        be given in the CFPy.cfp.crch module)
-                    - example: [(1, "WELL", None), (...), ...]
-                - Cauchy boundary (CAUCHY)
-                    - value (below) is a tuple for the Cauchy conductivity and
-                        the Cauchy limited inflow; the node head represents the
-                        Cauchy head if this type of FBC is used
-                    - example: [(1, "CAUCHY", (0.01, 0.04)), (...), ...]
-                - limited head boundary (LH)
-                    - value (below) is None (the head specified for the node
-                        represents the limited head)
-                    - example: [(1, "LH", None), (...), ...]
-                - time-dependent boundary (TD) - NOT IMPLEMENTED
-                    - value (below) is ...
-
-            Specify FBCs via a list of tuples of the form:
-            [(node_number, FBC_type, value), (...), ...], e.g.,
-            [(1, "WEL", {1: -0.25, 2: -0.25, ...})]
-        
-    Input Files:
-    
-    Output: List of strings.
-    
+        6 : temperature - is a real number in degrees Celsius, representing the
+            average temperature of ground water in the conduit pipes.
+        8 : no_n mc mr ml nb1 nb2 nb3 nb4 nb5 nb6 pb1 pb2 pb3 pb4 pb5 pb6 - are
+            integer values that describe how the nodes are connected to the
+            MODFLOW model cells, and how node and pipe connections are formed.
+        12 : geoheight - is the absolute elevation of the pipe nodes.
+        14 : sa_exchange - is an integer that equals either 0 or 1.
+            If sa_exchange = 0, the user assigns the pipe conductance for each
+                node in the CFP Input File.
+            If sa_exchange = 1, the user assigns the conduit wall permeability,
+                and the CFP will compute the surface areas of pipes when
+                assembling pipe conductances.
+        16 : epsilon - is a real number for the convergence criterion of the
+            Newton-Raphson iteration for pipe flow equations. Use a very small
+            number, such as 0.000001.
+        18 : niter - is an integer number for the maximum number of
+            Newton-Raphson iterations. If convergence cannot be achieved, the
+            program will stop and a warning will be printed in the MODFLOW
+            listing file.
+        20 : relax - is a real number of relaxation that determines the step
+            length of the Newton-Raphson iterations. Changing relax to a value
+            slightly less than 1.0 may facilitate convergence of the pipe flow
+            equations.
+        22 : p_nr - is an integer print flag for Newton Raphson 22. iterations.
+        25 : no_p diameter tortuosity rheight lcritrey_p tcritrey_p - are the
+            pipe numbers and hydraulic properties.
+        27 : no_n n_head - are integer node numbers and either node constant
+            heads or a flag that activates a CFP solution for node head. Use one
+            line for each node.
+        29 : no_n k_exchange - are integer node numbers and real numbers for
+            either conduit wall permeabilities (when sa_exchange=1) or pipe
+            conductances (when sa_exchange=0), one line for each node.
+        32 : ncl - is an integer equal to the total number of conduit layers.
+        34 : cl - is a one-dimensional integer array entered on a single line of
+            the CFP Input File. This array holds the MODFLOW layer numbers that
+            are conduit layers.
+        36 : ltemp - is the mean water temperature in degrees Celsius of all
+            conduit layers.
+        39 : void lcritrey_l tcritrey_l - are real numbers for each conduit
+            flow layer.    
     """
     
-    def __init__(self, mode, nnodes, npipes, nlay, nbr_data=0, geoheight=0, sa_exchange=0, epsilon=0, niter=0, 
-                 relax=0, p_nr=0, cond_data=0, n_head=0, k_exchange=0, ncl=0, cl=0, ltemp=0, condl_data=0, cads=None, fbc=None):
+    def __init__(self, mode, nnodes, npipes, nlay, nbr_data=0, geoheight=0,
+                 sa_exchange=0, epsilon=0, niter=0, relax=0, p_nr=0,
+                 cond_data=0, n_head=0, k_exchange=0, ncl=0, cl=0, ltemp=0,
+                 condl_data=0, cads=None, fbc=None):
         
         self.mode = str(mode)
         self.nnodes = str(nnodes)
@@ -132,37 +157,55 @@ class cfp():
         self.condl_data = str(condl_data)
         self.nbr_data = nbr_data
         self.nbr_str = []
-
-        # additions
         self.geoheight_str = []
         self.cond_data_str = []
         self.n_head_str = []
         self.k_exchange_str = []
         self.condl_data_str = []
-        self.cads = cads           # cads_str not neccessary as it gets added with the k_exchange string
+        # extra cads_str (as for other parameters) not neccessary as it gets
+        #   added with the k_exchange string
+        self.cads = cads
         self.fbc = fbc
         
         # create strings for nbr_data
-        # get number of nodes
+        # get number of nodes and for each node append an empty list to the nbr
+        #   string
         for i in range(len(self.nbr_data[0])):
             self.nbr_str.append([])
         
-        # create neighbor-information for each node from network information in nbr_data
+        # create neighbor-information for each node from network information in
+        #   nbr_data
         # append relevant values for each node
         for i in range(len(self.nbr_data[0])):
-            self.nbr_str[i] = (str(self.nbr_data[0][i]) + ' ' 
-                                 + str(self.nbr_data[2][i][0]) + ' ' + str(self.nbr_data[2][i][1]) + ' ' + str(self.nbr_data[2][i][2]) + ' ' 
-                                 + str(self.nbr_data[4][i][0]) + ' ' + str(self.nbr_data[4][i][1]) + ' ' + str(self.nbr_data[4][i][2]) + ' ' + str(self.nbr_data[4][i][3]) + ' ' + str(self.nbr_data[4][i][4]) + ' ' + str(self.nbr_data[4][i][5]) + ' '
-                                 + str(self.nbr_data[7][i][0]) + ' ' + str(self.nbr_data[7][i][1]) + ' ' + str(self.nbr_data[7][i][2]) + ' ' + str(self.nbr_data[7][i][3]) + ' ' + str(self.nbr_data[7][i][4]) + ' ' + str(self.nbr_data[7][i][5]))
+            self.nbr_str[i] = (
+                str(self.nbr_data[0][i]) + ' ' +
+                str(self.nbr_data[2][i][0]) + ' ' +
+                str(self.nbr_data[2][i][1]) + ' ' +
+                str(self.nbr_data[2][i][2]) + ' ' +
+                str(self.nbr_data[4][i][0]) + ' ' +
+                str(self.nbr_data[4][i][1]) + ' ' +
+                str(self.nbr_data[4][i][2]) + ' ' +
+                str(self.nbr_data[4][i][3]) + ' ' +
+                str(self.nbr_data[4][i][4]) + ' ' +
+                str(self.nbr_data[4][i][5]) + ' ' +
+                str(self.nbr_data[7][i][0]) + ' ' +
+                str(self.nbr_data[7][i][1]) + ' ' +
+                str(self.nbr_data[7][i][2]) + ' ' +
+                str(self.nbr_data[7][i][3]) + ' ' +
+                str(self.nbr_data[7][i][4]) + ' ' +
+                str(self.nbr_data[7][i][5])
+            )
         
         # prepare strings / lists for geoheight
+        # for each node, append an empty list to geoheight_str
         for i in range(int(self.nnodes)):
             self.geoheight_str.append([])
         
-        # produces: n_nodes number of lines with tuple (node_num, geoheight)
+        # produce nnodes number of lines with tuple (node_num, geoheight)
         # append relevant values for each node
-        # iterate through node planes
+        # initialize node counter
         node = 0
+        # iterate over node planes
         for plane in range(len(self.geoheight)):
             # iterate through rows (nodes are numbered in the order they
             #     appear when iterating through 1. node planes / layers,
