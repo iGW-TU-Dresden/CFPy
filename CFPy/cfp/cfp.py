@@ -1,5 +1,6 @@
 """
-Class to create data list for Conduit Flow Process (cfp) (required for all CFP modes)
+Class to create data list for Conduit Flow Process (cfp) (required for all CFP
+    modes)
 
 Documentation: https://pubs.usgs.gov/tm/tm6a24/    
 """
@@ -12,7 +13,7 @@ class cfp():
 
     Dependencies: None
     
-    Attributes
+    Parameters
     ----------
     mode : CFP mode; int
     nnodes : number of nodes (get from nbr output, see the CFPy.utils.nbr
@@ -167,6 +168,9 @@ class cfp():
         self.cads = cads
         self.fbc = fbc
         
+        ######
+        ## nbr
+        ######
         # create strings for nbr_data
         # get number of nodes and for each node append an empty list to the nbr
         #   string
@@ -196,54 +200,84 @@ class cfp():
                 str(self.nbr_data[7][i][5])
             )
         
+        ######
+        ## geoheight
+        ######
         # prepare strings / lists for geoheight
         # for each node, append an empty list to geoheight_str
         for i in range(int(self.nnodes)):
             self.geoheight_str.append([])
         
-        # produce nnodes number of lines with tuple (node_num, geoheight)
+        # produce nnodes number of lines with strings (node_num, geoheight)
         # append relevant values for each node
         # initialize node counter
         node = 0
         # iterate over node planes
         for plane in range(len(self.geoheight)):
-            # iterate through rows (nodes are numbered in the order they
-            #     appear when iterating through 1. node planes / layers,
-            #     2. rows, 3. columns)
+            # iterate over rows (nodes are numbered in the order they
+            #   appear when iterating through 1. node planes / layers,
+            #   2. rows, 3. columns)
             # order should be kept when iterating similarly
             # no need to separately get the node numbers from somewhere
-
             for row in range(len(self.geoheight[plane])):
+                # iterate over the columns
                 for col in range(len(self.geoheight[plane][row])):
-                    # separate value if it has a leading "c" (e.g., "c25.1")
-                    #     meaning the node is vertically connected
-
+                    # get the elevation value / the height for the current node
                     geoheight_val = str(geoheight[plane][row][col])
-
+                    # separate value if it has a leading "c" (e.g., "c25.1")
+                    #   meaning the node is vertically connected to another
+                    #   node
                     if geoheight_val[0] == "c":
                         geoheight_val = geoheight_val[1:]
-
+                    # if the (float) value is NOT equal to -999, it represents
+                    #   a node elevation value
                     if float(geoheight_val) != -999:
+                        # increment the counter
                         node += 1
+                        # make the string for the current node
                         geoheight_tuple = str(node) + ' ' + str(geoheight_val)
+                        # put the individual string to the global data structure
+                        #   holding all such strings
                         self.geoheight_str[node - 1] = geoheight_tuple
 
-        # create strings for cond_data given a list of lists with each list describing
-        #     one parameter for all respective pipes, each ordered equally
-        # (one line for each pipe: NO_P, DIAMETER, TORTU., RHEIGHT, LCRITREY_P, TCRITREY_P)
-
+        ######
+        ## cond_data
+        ######
+        # create strings for cond_data given a list of lists with each list
+        #   describing one parameter for all respective pipes (i.e., each inner
+        #   list has length npipes): NO_P, DIAMETER, TORTU., RHEIGHT,
+        #   LCRITREY_P, TCRITREY_P
         # prepare strings / lists for cond_data
         for pipe in range(len(self.cond_data[0])):
             self.cond_data_str.append([])
 
-        # loop over all pipes / lines in cond_data and create strings
+        # initialize the counter
         pipe_iter = 0
-        for num, dia, tor, rhe, lre, hre in zip(self.cond_data[0], self.cond_data[1], self.cond_data[2],
-                                                self.cond_data[3], self.cond_data[4], self.cond_data[5]):
-            cond_str = str(num) + ' ' + str(dia) + ' ' + str(tor) + ' ' + str(rhe) + ' ' + str(lre) + ' ' + str(hre)
+        # loop over all pipes / lines in cond_data and create strings
+        for num, dia, tor, rhe, lre, hre in zip(self.cond_data[0],
+                                                self.cond_data[1],
+                                                self.cond_data[2],
+                                                self.cond_data[3],
+                                                self.cond_data[4],
+                                                self.cond_data[5]):
+            # create the full string for the current pipe
+            cond_str = (
+                str(num) + ' ' +
+                str(dia) + ' ' +
+                str(tor) + ' ' +
+                str(rhe) + ' ' +
+                str(lre) + ' ' +
+                str(hre)
+            )
+            # put the individual string to the global data structure
+            #   holding all such strings
             self.cond_data_str[pipe_iter] = cond_str
+            # increment the counter
             pipe_iter += 1
 
+        ######
+        ## node heads and fbc data
+        ######
         # create strings / lists for n_head
         for node in range(len(self.n_head[0])):
             self.n_head_str.append([])
@@ -251,10 +285,16 @@ class cfp():
         # loop over all nodes and create head strings if there is 
         #   no FBC data
         if self.fbc is None:
+            # initialize counter
             node_iter = 0
+            # loop over all nodes
             for node in zip(self.n_head[0], self.n_head[1]):
+                # create string of node number and node head
                 node_str = str(node[0]) + ' ' + str(node[1])
+                # put the individual string to the global data structure
+                #   holding all such strings
                 self.n_head_str[node_iter] = node_str
+                # increment the counter
                 node_iter += 1
         # if there is FBC data, handle it
         elif self.fbc is not None:
@@ -263,7 +303,9 @@ class cfp():
             fbc_nodes = []
 
             # get fbc nodes and indices
+            # loop over fbc dict keys
             for i in self.fbc:
+                # append the node number to the fbc_nodes
                 fbc_nodes.append(i[0])
 
             # get unique node numbers
@@ -272,18 +314,20 @@ class cfp():
             # raise an error if there is a node with two boundary conditions
             try:
                 if not fbc_nodes == fbc_nodes_unique:
-                    msg = ("There are multiple FBCs specified for a single node!")
+                    msg = ("There are multiple FBCs specified for a single"
+                        "node!")
                     raise ValueError(msg)
             except ValueError:
                 raise
 
             # make structure that has FBC information for EVERY node
             #     (even if there is no FBC at that node)
-            # make list of node numbers
-            # iterate over the nodes and append FBC information
+            # initialize counters
             node_iter = 0
             node_str_iter = 0
+            # make list of node numbers
             node_nums = [[i] for i in range(1, int(self.nnodes) + 1)]
+            # iterate over the nodes
             for i, j in zip(node_nums, self.n_head[1]):
                 # append the node head
                 i.append(j)
@@ -295,17 +339,29 @@ class cfp():
                     # check individual FBC types and append corresponding
                     #   values if applicable (not for WELL)
                     if fbc[node_iter][1] == "TD":
-                        raise ValueError("TD / time dependent boundary is not implemented!")
+                        raise ValueError("TD / time dependent boundary is not"
+                            "implemented!")
                     elif fbc[node_iter][1] == "FHLQ":
                         i.append(fbc[node_iter][2])
                     elif fbc[node_iter][1] == "CAUCHY":
                         i.append(fbc[node_iter][2][0])
                         i.append(fbc[node_iter][2][1])
                     elif fbc[node_iter][1] == "WELL":
-                        msg = "When using a WELL FBC, make sure to include the BC values, i.e., flow rates, in the CRCH module!"
+                        msg = ("When using a WELL FBC, make sure to include the"
+                               "BC values, i.e., flow rates, in the CRCH"
+                               "module!")
                         warnings.warn(msg)
-                    elif fbc[node_iter][1] not in ["FHLQ", "WELL", "CAUCHY", "LH", "TD"]:
-                        raise ValueError("The FBC '{}' you specified does not exist!".format(fbc[node_iter][1]))
+                    # check if an invalid fbc type was given
+                    elif fbc[node_iter][1] not in [
+                        "FHLQ",
+                        "WELL",
+                        "CAUCHY",
+                        "LH",
+                        "TD"
+                    ]:
+                        raise ValueError("The FBC '{}' you specified does not"
+                            "exist!".format(fbc[node_iter][1]))
+                    # increment counter
                     node_iter += 1
                 else:
                     # if there is no FBC for the node, append an "x"
@@ -315,45 +371,76 @@ class cfp():
                 node_str = ""
                 for k in i:
                     node_str += str(k) + " "
-                # put the node string to the corresponding data structure
+                # put the individual string to the global data structure
+                #   holding all such strings
                 self.n_head_str[node_str_iter] = node_str
+                # increment counter
                 node_str_iter += 1
 
+        ######
+        ## k exchange
+        ######
         # prepare strings / lists for k_exchange
         for node in range(len(self.k_exchange[0])):
             self.k_exchange_str.append([])
 
-        # loop over all nodes and create strings not including cads information (if cads = None)
+        # initialize counter
         kex_iter = 0
+        # if cads information not given, only use the k_exchange data
         if self.cads == None:
+            # loop over all nodes and create strings not including cads
+            #   information (if cads = None)
             for node in zip(self.k_exchange[0], self.k_exchange[1]):
+                # create the k_exchange string
                 node_str = str(node[0]) + ' ' + str(node[1])
+                # 
                 self.k_exchange_str[kex_iter] = node_str
                 kex_iter += 1
 
         # loop over all nodes and create strings including cads information
         elif self.cads is not None:
             for node in zip(self.k_exchange[0], self.k_exchange[1], self.cads):
-                node_str = str(node[0]) + ' ' + str(node[1]) + ' ' + str(node[2])
+                node_str = (
+                    str(node[0]) + ' ' +
+                    str(node[1]) + ' ' +
+                    str(node[2])
+                )
+                # put the individual string to the global data structure
+                #   holding all such strings
                 self.k_exchange_str[kex_iter] = node_str
+                # increment counter
                 kex_iter += 1
 
         # create strings for condl_data
 
         ### TODO
 
-        # left out as it is not relevant for the current
-        #     cases studied
-
         # create strings for component data (nnodes, npipes, nlayers)
-        self.components = str(self.nnodes) + ' ' + str(self.npipes) + ' ' + str(self.nlay)
+        self.components = (
+            str(self.nnodes) + ' ' +
+            str(self.npipes) + ' ' +
+            str(self.nlay)
+        )
 
         return
     
     def cfp(self):
+        """
+        Write the .cfp input file for MODFLOW-CFP
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        cfp : the list of strings representing the contents of the .cfp file
+        """
         
+        # create line 0 string
         in0 = '# CFP file - Mode'
 
+        # create line 2 string depending on cads and fbc data given
         if self.cads is None and self.fbc is None:
             in2 = '# Conduit data for mode 1 and 3'
         elif self.cads is not None and self.fbc is None:
@@ -363,36 +450,47 @@ class cfp():
         elif self.cads is not None and self.fbc is not None:
             in2 = 'CADS FBC'
 
-        in3 = '# (nnodes, npipes, nlayers)'
-        in5 = '# Water temperature'
-        in7 = '# Node number, column, row, layer, neighbor node numbers, connected pipe numbers (no_n, mc, mr, ml, nb1, nb2, nb3, nb4, nb5, nb6, pb1, pb2, pb3, pb4, pb5, pb6)'
-        in9 = '# Geoheight'
-        in10 = '# Option 1: Node number (no_n), elevation (one line per node)'
-        in11 = '# Option 2: Total number of nodes (nnodes), elevation (one line for all nodes)'
-        in13 = '# Pipe conductance (sa_exchange)'
-        in15 = '# Convergence criterion (epsilon)'
-        in17 = '# Maximum number of iterations (niter)'
-        in19 = '# Step length of iterations (relax)'
-        in21 = '# Print flag (p_nr)'
-        in23 = '# Conduit parameters'
-        in24 = '# Pipe number, diameter, tortuosity, roughness, lower critical Reynolds number, upper critical Reynolds number (no_p, diameter, tortuosity, rheight, lcritrey_p, tcritrey_p)'
-        in26 = '# Node heads (no_n, n_head)'
-        in28 = '# Node number, pipe conductance (no_n, k_exchange; sa_exchange = 0) or conduit wall permeability (sa_exchange = 1)'
-        in30 = '# Conduit layers for mode 2 and 3'
-        in31 = '# Number of conduit layers (ncl)'
-        in33 = '# Layer numbers that are conduit layers (cl)'
-        in35 = '# Mean water temperature of all conduit layers (ltemp)'
-        in37 = '# Conduit layer parameters'
-        in38 = '# Mean void diameter, lower critical Reynolds number, upper critical Reynolds number (void, lcritrey_l, tcritrey_l'
+        # create remaining fixed strings
+        in3 = "# (nnodes, npipes, nlayers)"
+        in5 = "# Water temperature"
+        in7 = ("# Node number, column, row, layer, neighbor node numbers,"
+               "connected pipe numbers (no_n, mc, mr, ml, nb1, nb2, nb3,"
+               "nb4, nb5, nb6, pb1, pb2, pb3, pb4, pb5, pb6)")
+        in9 = "# Geoheight"
+        in10 = "# Option 1: Node number (no_n), elevation (one line per node)"
+        in11 = ("# Option 2: Total number of nodes (nnodes), elevation (one"
+                "line for all nodes)")
+        in13 = "# Pipe conductance (sa_exchange)"
+        in15 = "# Convergence criterion (epsilon)"
+        in17 = "# Maximum number of iterations (niter)"
+        in19 = "# Step length of iterations (relax)"
+        in21 = "# Print flag (p_nr)"
+        in23 = "# Conduit parameters"
+        in24 = ("# Pipe number, diameter, tortuosity, roughness, lower critical"
+                "Reynolds number, upper critical Reynolds number (no_p, diameter,"
+                "tortuosity, rheight, lcritrey_p, tcritrey_p)")
+        in26 = "# Node heads (no_n, n_head)"
+        in28 = ("# Node number, pipe conductance (no_n, k_exchange; sa_exchange"
+                "= 0) or conduit wall permeability (sa_exchange = 1)")
+        in30 = "# Conduit layers for mode 2 and 3"
+        in31 = "# Number of conduit layers (ncl)"
+        in33 = "# Layer numbers that are conduit layers (cl)"
+        in35 = "# Mean water temperature of all conduit layers (ltemp)"
+        in37 = "# Conduit layer parameters"
+        in38 = ("# Mean void diameter, lower critical Reynolds number, upper"
+                "critical Reynolds number (void, lcritrey_l, tcritrey_l")
         
+        # create full content for mode 1
         if self.mode == '1':
             self.cfp = [in0, self.mode, in2, in3, self.components, in5, self.ltemp, in7, *self.nbr_str, in9, in10, 
                         in11, *self.geoheight_str, in13, self.sa_exchange, in15, self.epsilon, in17, self.niter, in19, self.relax, 
                         in21, self.p_nr, in23, in24, *self.cond_data_str, in26, *self.n_head_str, in28, *self.k_exchange_str]
         
+        # create full content for mode 1 (NOT SUPPORTED AT THE MOMENT)
         elif self.mode == '2':
             self.cfp = [in0, self.mode, in30, in31, self.ncl, in33, self.cl, in35, self.ltemp, in37, in38, self.condl_data]
-    
+        
+        # create full content for mode 1 (NOT SUPPORTED AT THE MOMENT)
         elif self.mode == '3':
             self.cfp = [in0, self.mode, in2, in3, self.components, in5, self.ltemp, in7, *self.nbr_str, in9, in10, 
                         in11, *self.geoheight_str, in13, self.sa_exchange, in15, self.epsilon, in17, self.niter, in19, self.relax, 
