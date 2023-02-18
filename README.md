@@ -16,10 +16,18 @@ If you want to contribute to the package (e.g., changing the code or adding exam
 
 See the beginning of the individual example notebooks for more information on `Python` and package versions.
 
+
 # Installation
 
 You can use / set up a new virtual environment with the environment file (`cfpy_env.yml`) prior to installing `CFPy`, which contains all required dependencies. Note, however, that **`pyKasso` and `karstnet` are not available on `PyPI` and have to be installed from source**! If you have an environment with all the dependencies available, activate it (`conda activate myEnvironment`, replace `myEnvironment` with your environment name). Afterwards you can install `CFPy`.
 Download the source code as `.zip` and unpack it on your machine. In the command line (or in the `Anaconda Prompt` / `Anaconda PowerShell Prompt`) navigate to the unpacked folder (e.g., `C:\User\...\CFPy-main`). Install the package via `pip install .` (don't forget the "." at the end).
+
+All dependencies needed including required packages for the examples can be installed from the environment.yml file. For Anaconda use the command:
+
+```
+conda env create -f environment.yml
+```
+
 
 # CFPy_Examples:
 Note: make sure you have pyKasso (and its dependencies) installed if you want to use the full functionality of CFPy!
@@ -49,7 +57,7 @@ Note: make sure you have pyKasso (and its dependencies) installed if you want to
     + demonstration of the coupling process between `pyKasso` and `CFPy`
     + a network is generated with `pyKasso` and validated with the `CFPy.preprocessing` module
     + the structure of the `CFPy` input file (the .nbr-file) is described
-    
+
 ## Example 4
 - Notebook: EX04_CFPy_FloPy_PreExisting_FloPyModel.ipynb
 - Files: CFPy_EX04_RUN
@@ -59,7 +67,7 @@ Note: make sure you have pyKasso (and its dependencies) installed if you want to
     + first, a simple MODFLOW model is created with `FloPy`
     + passing the `FloPy` model instance to the `CFPy` preprocessor automatically extracts all the usable information from the `FloPy` model (such as layer elevations, discretization etc.)
     + this greatly improves the usability of CFPy for pre-existing MODFLOW models (which do not yet include `CFP`)
-    
+
 ## Example 5
 - Notebook: EX05_CFPy_FloPy_ConduitWell.ipynb
 - Files: CFPy_EX05_RUN
