@@ -25,7 +25,7 @@ Download the source code as `.zip` and unpack it on your machine. In the command
 Note: make sure you have pyKasso (and its dependencies) installed if you want to use the full functionality of CFPy!
 
 ## Example 1
-- Notebook: EX01_CFPy_FloPy.ipynb (updated version) or EX01_CFPy_FloPy_OLD.ipynb (old but functioning version)
+- Notebook: EX01_CFPy_FloPy_I.ipynb
 - Files: CFPy_EX01_RUN
 - Description:
     + simple example for CFP mode 1 from the MODFLOW-CFP documentation, coupling `CFPy` (MODFLOW-CFP input-file generation) and `FloPy` (MODFLOW input-file generation)
@@ -43,7 +43,7 @@ Note: make sure you have pyKasso (and its dependencies) installed if you want to
     + evaluation / initial assessment of simulation uncertainty, taking multiple network realizations into account
 
 ## Example 3
-- Notebook: EX03_pyKasso_CFPy_coupling.ipynb
+- Notebook: EX03_pyKasso_CFPy_coupling_I.ipynb
 - MODFLOW files: none
 - Description:
     + demonstration of the coupling process between `pyKasso` and `CFPy`
@@ -61,13 +61,25 @@ Note: make sure you have pyKasso (and its dependencies) installed if you want to
     + this greatly improves the usability of CFPy for pre-existing MODFLOW models (which do not yet include `CFP`)
     
 ## Example 5
-- Notebook: EX05_CFPy_FloPy_ConduitWell
+- Notebook: EX05_CFPy_FloPy_ConduitWell.ipynb
 - Files: CFPy_EX05_RUN
 - Description:
     + like example EX01 but with a conduit network flow boundary condition (FBC)
 
+## Example 6
+- Notebook: EX06_CFPy_FloPy_II.ipynb
+- Files: CFPy_EX06_RUN
+- Description:
+    + like example EX01 but with an already existing .nbr file (two node planes)
+
+## Example 7
+- Notebook: EX07_pyKasso_CFPy_coupling_II.ipynb
+- Files: none
+- Description:
+    + like example EX03 but with some additions (i.e., making the pyKasso-generated network quasi-3D and validating a network with two node planes)
+
 ## NOTE
-To run the examples, make sure that the `CFPy` package directory (the `CFPy` folder) is inside the example directory
+To run the examples, make sure that the `CFPy` package directory (the `CFPy` folder) is inside the example directory or that `CFPy` is installed as a package in the active environment.
 
 # Workflow Description
 
