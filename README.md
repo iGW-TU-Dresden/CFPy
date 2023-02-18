@@ -25,7 +25,7 @@ Download the source code as `.zip` and unpack it on your machine. In the command
 All dependencies needed including required packages for the examples can be installed from the environment.yml file. For Anaconda use the command:
 
 ```
-conda env create -f environment.yml
+conda env create -f cfpy_env.yml
 ```
 
 
