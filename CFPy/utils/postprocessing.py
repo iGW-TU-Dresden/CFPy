@@ -9,13 +9,18 @@ class Postprocessor():
 	While MODFLOW-related standard outputs can be read with flopy
 	utilities, CFP-specific output data can be read with this
 	post-processing capability.
+
+	Parameters
+	----------
+	modelname : the name of the model; str
+	path : the path to the listing file; str
 	"""
 
-	def __init__(self, modelname=None, path=None):
-		"""
-		modelname : the name of the model, str
-		path : the path to the listing file, str
-		"""
+	def __init__(
+		self,
+		modelname=None,
+		path=None
+		):
 
 		self.modelname = modelname
 		self.path = path
@@ -27,7 +32,12 @@ class FileReader(Postprocessor):
 	and all sub-directories (if modelname is not None) or for a specific
 	file (if path is not None).
 	If no LIST-file corresponding to the given modelname or path is
-	available in the working directory or its sub-directories, an error is raised.
+	available in the working directory or its sub-directories, an error is
+	raised.
+
+	Parameters
+	----------
+	modelname : the name of the model; str
 
 	Example:
 
@@ -38,12 +48,13 @@ class FileReader(Postprocessor):
 	node_df, tube_df = fr.read_output(node_num=1, tube_num=2)
 	"""
 
-	def __init__(self, modelname=None, path=None):
-		"""
-		modelname : the name of the model, str
-		"""
+	def __init__(
+		self,
+		modelname=None,
+		path=None
+		):
 
-		# check that either modelname or pat are given
+		# check that either modelname or path are given
 		try:
 			if path is None and modelname is None:
 				msg = ("Either path or modelname need to be given")
@@ -93,17 +104,19 @@ class FileReader(Postprocessor):
 		Read the listing file and return DataFrames of node and tube state
 		variables with each row representing a single time step.
 		
-		:: Parameters ::
-		node_num : an integer specifying the
-			node number for which to obtain results for, integer
-		tube_num : an integer specifying the
-			tube number for which to obtain results for, integer
+		Parameters
+		----------
+		node_num : an integer specifying the node number for which to obtain
+			results for; int
+		tube_num : an integer specifying the tube number for which to obtain
+			results for; int
 
-		:: Returns ::
-		node_df : a pandas DataFrame containing all node state variables
-			for all time steps for a given node; pd.DataFrame
-		tube_df : a pandas DataFrame containing all tube state variables
-			for all time steps for a given tube; pd.DataFrame
+		Returns
+		-------
+		node_df : a pandas DataFrame containing all node state variables for all
+			time steps for a given node; pd.DataFrame
+		tube_df : a pandas DataFrame containing all tube state variables for all
+			time steps for a given tube; pd.DataFrame
 
 		NOTE: This works fine for CFPv2 because the column names are always
 			the same. If the column names change, change the corresponding
@@ -157,9 +170,10 @@ class FileReader(Postprocessor):
 					file.write(line)
 
 			# assign column names
-			node_header = ["Node#", "Node Head [L]", "Matrix Head [L]", "Exchange [L3 T-1]",
-				"CADS Flow [L3 T-1]", "PFPS Flow [L3 T-1]", "Direct Recharge [L3 T-1]",
-				"Q Well [L3 T-1]", "FHLQ", "Cauchy", "Cauchy LQ", "QLH", "Q Fix [L3 T-1]"]
+			node_header = ["Node#", "Node Head [L]", "Matrix Head [L]",
+				"Exchange [L3 T-1]", "CADS Flow [L3 T-1]", "PFPS Flow [L3 T-1]",
+				"Direct Recharge [L3 T-1]", "Q Well [L3 T-1]", "FHLQ", "Cauchy",
+				"Cauchy LQ", "QLH", "Q Fix [L3 T-1]"]
 
 			# read the temporary file to a DataFrame
 			node_df = pd.read_table(
@@ -182,20 +196,21 @@ class FileReader(Postprocessor):
 				#    here, we iterate over all lines in the LIST file and look
 				#    if the string "TUBE  B  E" is present in the current line
 				#    if yes, save the line below this string that corresponds 
-				# 	 to the currently checked tube number												MR 2023/01/20
+				# 	 to the currently checked tube number
 				if "TUBE  B  E" in line:
 					# handle the case when there is the warning:
 					# 	"WARNING! TUBE X ACTIVE BUT NO FLOW" somewhere in the 
 					# 	reported results
-					if "WARNING!" in self.list_lines[num:num + self.tube_num * 2]:						# MR 2023/01/22
-						# we have to decide whether we want to raise an error here or just
-						#	print out a warning
-						# raise ValueError("Warning! There are active tubes with no flow!")				
+					if "WARNING!" in self.list_lines[num:num + self.tube_num * 2]:
+						# we have to decide whether we want to raise an error
+						# 	here or just print out a warning
+						# raise ValueError("Warning! There are active tubes with
+						#	no flow!")				
 						print("Warning! There are active tubes with no flow!")
 
-					# if this warning is in the current line and it corresponds to the tube
-					# 	number, we just go to the next line and append the value (which is
-					#	always 0.0 in this case)
+					# if this warning is in the current line and it corresponds
+					#	to the tube number, we just go to the next line and
+					#	append the value (which is always 0.0 in this case)
 					if ("WARNING!" in self.list_lines[num + self.tube_num] and
 						str(self.tube_num) in self.list_lines[num + self.tube_num]):
 						tube_lines.append(self.list_lines[num + self.tube_num + 1])
@@ -210,8 +225,9 @@ class FileReader(Postprocessor):
 					file.write(line)
 
 			# assign column names
-			tube_header = ["Tube", "Beginning Node#", "Ending Node#", "Flow Type",
-				"Q [L3 T-1]", "Diam. [L]", "Len. [L]", "Re [-]", "Residence Time [T]"]
+			tube_header = ["Tube", "Beginning Node#", "Ending Node#",
+				"Flow Type", "Q [L3 T-1]", "Diam. [L]", "Len. [L]", "Re [-]",
+				"Residence Time [T]"]
 
 			# read the temporary file to a DataFrame
 			tube_df = pd.read_table(
