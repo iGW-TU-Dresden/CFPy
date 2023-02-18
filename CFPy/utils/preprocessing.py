@@ -106,7 +106,7 @@ class Preprocessor():
 
 		return
 
-	def generate_nbr(self, path, nplanes, nrows=None, ncols=None, nlays=None,
+	def generate_nbr(self, path=None, nplanes=1, nrows=None, ncols=None, nlays=None,
 		layer_elevations=None):
 		"""
 		Generate the .nbr-file for CFPy from the given information and the validated
@@ -169,7 +169,7 @@ class Preprocessor():
 				# write nrows, ncols
 				f.write(str(nrows) + " " + str(ncols) + "\n")
 				# write nlays, nplanes
-				f.write(str(nlays) + " " + str(1) + "\n") # the 1 here defines the number of node planes
+				f.write(str(nlays) + " " + str(nplanes) + "\n")
 				# comment line
 				f.write("#\n")
 				# write layer elevations
