@@ -15,11 +15,20 @@ import matplotlib.pyplot as plt
 class NetworkCreator():
 
 	"""
-	class stores method to create data structures used to plot the
-	conduit network
+	Class to create data structures used to plot the conduit network
+
+	Parameters
+	----------
+	elevs : list-like of MODFLOW layer elevations with shape (n_lays, n_rows,
+		n_cols); list-like of floats
+	nbr_data : the full nbr_data array from the nbr.nbr() method
 	"""
 
-	def __init__(self, elevs, nbr_data):
+	def __init__(
+		self,
+		elevs,
+		nbr_data
+		):
 		# assuming that there are two elements (multidimensional lists)
 		# in elevs, i.e., the bottom elevation array and the conduit
 		# elevation array from nbr.nbr_read()
@@ -45,7 +54,24 @@ class NetworkCreator():
 		self.tube_pairs = copy.deepcopy(nbr_data[6])
 		self.tube_nbr = copy.deepcopy(nbr_data[7])
 
-	def create_network(self):		
+	def create_network(self):
+		"""
+		Create the network data structure for plotting
+
+		Parameters
+		----------
+		None
+
+		Returns
+		-------
+		pipes_coords
+		node_x : list-like of node x-coordinates (along a row)
+		node_y : list-like of node y-coordinates (along a col)
+		node_z : list-like of node z-coordinates
+		node_numbers : list-like of node numbers
+		n_rows : integer number of rows
+		n_cols : integer number of cols
+		"""		
 		# get and copy data
 		bot_elev = self.bot_elev
 		cond_elev = self.cond_elev
@@ -122,13 +148,42 @@ class NetworkCreator():
 class Network(NetworkCreator):
 
 	"""
-	class stores plotting methods to handle the plottable data structures
+	Class stores plotting methods to handle the plottable data structures
+
+	Parameters
+	----------
+	elevs : list-like of MODFLOW layer elevations with shape (n_lays, n_rows,
+		n_cols); list-like of floats
+	nbr_data : the full nbr_data array from the nbr.nbr() method
+	plot_nums : bool specifying whether to plot node and pipe numbers; default
+		is True
+	rot_x : float specifying the rotation around the x-axis in degrees; default
+		is 40
+	rot_z : float specifying the rotation around the z-axis in degrees; default
+		is 120
+	text_shift : float specifying how much to shift the text-boxes away from the
+		nodes / tubes (only has an effect if plot_nums is True); default is .1
+	dpi : integer number specifying the plotting resolution; default is 100
+	kind : string specifying whether MODFLOW layer elevations should be
+		interpolated with triangles ("triangular") or with rectangles
+		("rectangular"); default is "rectangular"
+
 	NOTE: at the moment, only the plotting utilities for the "raw" network
 	visualization and for the combined visualization of network and simulation
 	results are included
 	"""
 
-	def __init__(self, elevs, nbr_data, plot_nums=True, rot_x=40, rot_z=120, text_shift=0.1, dpi=100, kind="rectangular"):
+	def __init__(
+		self,
+		elevs,
+		nbr_data,
+		plot_nums=True,
+		rot_x=40,
+		rot_z=120,
+		text_shift=0.1,
+		dpi=100,
+		kind="rectangular"
+		):
 
 		self.plot_nums = plot_nums
 		self.rot_x = rot_x
@@ -150,20 +205,31 @@ class Network(NetworkCreator):
 		self.n_rows = network_[5]
 		self.n_cols = network_[6]
 
-	def plot_network(self, plot_nums=None, rot_x=None, rot_z=None, text_shift=None, dpi=None, kind=None, alpha=None):
+	def plot_network(self, plot_nums=None, rot_x=None, rot_z=None,
+		text_shift=None, dpi=None, kind=None, alpha=None):
 		"""
 		plotting the raw conduit network without simulation results
 		
-		plot_nums : whether to plot node and conduit numbers, Bool
-		rot_x : view rotation around x-axis, 0 <= float <= 360
-		rot_z : view rotation around z-axis, 0 <= float <= 360
-		text_shift : ammount of text shifting relative to nodes and 
-			conduits, float
-		dpi : resolution (dpi) of resulting figure, int
-		kind : kind of surface plot for the layer boundaries, can
-			either be "rectangular" or "triangular" for rectangular
-			or triangle elements of the surface, default is "rectangular",
-			str
+		Parameters
+		----------
+		plot_nums : bool specifying whether to plot node and pipe numbers; default
+		is True
+		rot_x : float specifying the rotation around the x-axis in degrees; default
+			is 40
+		rot_z : float specifying the rotation around the z-axis in degrees; default
+			is 120
+		text_shift : float specifying how much to shift the text-boxes away from the
+			nodes / tubes (only has an effect if plot_nums is True); default is .1
+		dpi : integer number specifying the plotting resolution; default is 100
+		kind : string specifying whether MODFLOW layer elevations should be
+			interpolated with triangles ("triangular") or with rectangles
+			("rectangular"); default is "rectangular"
+
+		Returns
+		-------
+		ax : the matplotlib axis
+		xx_center : x-coordinates of the model meshgrid
+		yy_center : y-coordinates of the model meshgrid
 		"""
 
 		if plot_nums is None:
@@ -315,10 +381,30 @@ class Network(NetworkCreator):
 
 		return self.ax, xx_center, yy_center
 
-	def plot_results(self, heads, time, layer, n_contours=10, plot_nums=None, rot_x=None, rot_z=None, text_shift=None, dpi=None, alpha=None):
-		# heads : head data used for plotting, array of shape ()
-		# time : time to plot heads for, int
-		# layer : MODFLOW layer to plot data for; if layer = None, all layers are plotted, int
+	def plot_results(self, heads, time, layer, n_contours=10, plot_nums=None,
+		rot_x=None, rot_z=None, text_shift=None, dpi=None, alpha=None):
+		"""
+		plotting the conduit network with simulation results as contour lines
+		
+		Parameters
+		----------
+		heads : array of head values with shape (n_timesteps, n_lays, n_rows,
+			n_cols); numpy ndarray
+		time : time step index for which to plot heads for; int
+		layer : the layer index for which to plot heads for; int
+		plot_nums : bool specifying whether to plot node and pipe numbers; default
+			is True
+		rot_x : float specifying the rotation around the x-axis in degrees; default
+			is 40
+		rot_z : float specifying the rotation around the z-axis in degrees; default
+			is 120
+		text_shift : float specifying how much to shift the text-boxes away from the
+			nodes / tubes (only has an effect if plot_nums is True); default is .1
+		dpi : integer number specifying the plotting resolution; default is 100
+		kind : string specifying whether MODFLOW layer elevations should be
+			interpolated with triangles ("triangular") or with rectangles
+			("rectangular"); default is "rectangular"
+		"""
 
 		if plot_nums is None:
 			plot_nums = self.plot_nums
@@ -343,7 +429,8 @@ class Network(NetworkCreator):
 			)
 
 		contourdata = np.array(heads[time, layer - 1, :, :])
-		ct = self.ax.contour(xx_center, yy_center, contourdata, levels=n_contours, alpha=0.5, cmap="rainbow", linewidths=2)
+		ct = self.ax.contour(xx_center, yy_center, contourdata, levels=n_contours,
+			alpha=0.5, cmap="rainbow", linewidths=2)
 
 		cb = plt.colorbar(ct, shrink=0.3)
 		cb.set_label("Head [m]")

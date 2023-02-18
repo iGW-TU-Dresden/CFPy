@@ -4,38 +4,63 @@ Class to update exsiting .nam file
 
 class update_nam():
     """
+    A class to update the MODFLOW .nam file with MODFLOW-CFP-specific input
+    files and unit numbers
+
     Dependencies: None
         
-    Input Variables:
-        
-        modelname: Name of the model (str)
-        mode: CFP mode (int)
-        unit_num: Fortran unit number (int)
-        
-    Input Files:
+    Parameters
+    ----------
+    modelname : name of the model; str
+    mode : CFP mode; int
+    cfp_unit_num : Fortran unit number for the .cfp file; int
+    coc_unit_num : Fortran unit number for the .coc file; int
+    crch_unit_num : Fortran unit number for the .crch file; int
     
-    Output: Updated nam file
-    
-    Note: Firstly, if present, any CFP related entries in the nam file will be removed. 
-        Then, the nam file is updated according to the users initialization of the update_nam class. 
+    NOTE: First, if present, any CFP related entries in the nam file will be
+        removed. Then, the nam file is updated according to the users
+        initialization of the update_nam class. 
         
     """
     
-    def __init__(self, modelname, mode, coc_unit_num=23, cfp_unit_num=16, crch_unit_num=14):
+    def __init__(
+        self,
+        modelname, 
+        mode,
+        coc_unit_num=23,
+        cfp_unit_num=16,
+        crch_unit_num=14
+        ):
         
         self.modelname = modelname
         self.mode = mode
         self.coc_unit_num = coc_unit_num
         self.cfp_unit_num = cfp_unit_num
         self.crch_unit_num = crch_unit_num
-        self.update = ['COC' + '%17s'%self.coc_unit_num + '  ' + self.modelname + '.coc' + '\n',
-                       'CFP' + '%17s'%self.cfp_unit_num + '  ' + self.modelname + '.cfp' + '\n',
-                       'CRCH' + '%16s'%self.crch_unit_num + '  ' + self.modelname + '.crch']
+        self.update = [
+            ('COC' + '%17s'%self.coc_unit_num + '  ' +
+                self.modelname + '.coc' + '\n'),
+            ('CFP' + '%17s'%self.cfp_unit_num + '  ' +
+                self.modelname + '.cfp' + '\n'),
+            ('CRCH' + '%16s'%self.crch_unit_num + '  ' +
+                self.modelname + '.crch')
+            ]
         
         if self.mode == 2:
             del(self.update[-1])
 
     def update_nam(self):
+        """
+        Update the .nam file
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
 
         ftypes = ["COC", "CFP", "CRCH"]
 
