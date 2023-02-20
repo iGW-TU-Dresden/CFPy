@@ -41,7 +41,7 @@ Note: make sure you have pyKasso (and its dependencies) installed if you want to
     + model computation with `cfpv2`
 
 ## Example 2
-- Notebook: EX02_CFPy_idealized_EASY.ipynb
+- Notebook: EX02_stochastic_pyKasso_FloPy_I.ipynb
 - Files: CFPy_EX02_RUN
 - Description:
     + complex example coupling `pyKasso` (network generation), `CFPy` (MODFLOW-CFP input-file generation), and `FloPy` (MODFLOW input-file generation)
@@ -85,6 +85,12 @@ Note: make sure you have pyKasso (and its dependencies) installed if you want to
 - Files: none
 - Description:
     + like example EX03 but with some additions (i.e., making the pyKasso-generated network quasi-3D and validating a network with two node planes)
+
+## Example 8
+- Notebook: EX08_stochastic_pyKasso_FloPy_II.ipynb
+- Files: CFPy_EX08_RUN
+- Description:
+    + like example EX02 but more streamlined with less additional functions (more straightforward application of CFPy)
 
 ## NOTE
 To run the examples, make sure that the `CFPy` package directory (the `CFPy` folder) is inside the example directory or that `CFPy` is installed as a package in the active environment.
