@@ -10,24 +10,17 @@ If you want to contribute to the package (e.g., changing the code or adding exam
 - `python` >= 3.9, < 3.11
 - `numpy`>= 1.18.5, <1.25.0
 - `matplotlib`>= 3.3.4, <3.6.0
-- `pykasso`= 0.1.0
 - `pandas`>= 1.2.1
 - `flopy`>= 3.3.3
+- `pykasso`= 0.1.0 (OPTIONAL)
 
 See the beginning of the individual example notebooks for more information on `Python` and package versions.
 
 
 # Installation
+To use basic functionality (i.e., without being able to use `pyKasso`), all dependencies are automatically installed when installing `CFPy` from source (see below). Just make sure that you have 3.9 <= Python <= 3.10 installed in your environment.
 
-You can use / set up a new virtual environment with the environment file (`cfpy_env.yml`) prior to installing `CFPy`, which contains all required dependencies. Note, however, that **`pyKasso` and `karstnet` are not available on `PyPI` and have to be installed from source**! If you have an environment with all the dependencies available, activate it (`conda activate myEnvironment`, replace `myEnvironment` with your environment name). Afterwards you can install `CFPy`.
-Download the source code as `.zip` and unpack it on your machine. In the command line (or in the `Anaconda Prompt` / `Anaconda PowerShell Prompt`) navigate to the unpacked folder (e.g., `C:\User\...\CFPy-main`). Install the package via `pip install .` (don't forget the "." at the end).
-
-All dependencies needed including required packages for the examples can be installed from the environment.yml file. For Anaconda use the command:
-
-```
-conda env create -f cfpy_env.yml
-```
-
+If you want to use `pyKasso`, first follow the description given for [the `pyKasso` version for `CFPy`](https://github.com/randlab/pyKasso/tree/cfpy). After setting up `pyKasso`, you can proceed with installing `CFPy`: download the source code as `.zip` and unpack it on your machine. In the command line (or in the `Anaconda Prompt` / `Anaconda PowerShell Prompt`) navigate to the unpacked folder (e.g., `C:\User\...\CFPy-main`). Install the package via `pip install .` (don't forget the "." at the end).
 
 # CFPy_Examples:
 Note: make sure you have pyKasso (and its dependencies) installed if you want to use the full functionality of CFPy!

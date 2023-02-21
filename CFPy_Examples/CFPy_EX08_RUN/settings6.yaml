@@ -1,0 +1,116 @@
+ ##################
+### SKS SETTINGS ###
+ ##################
+
+---
+############
+### Grid ###
+############
+
+x0   : 0
+y0   : 0
+xnum : 35
+ynum : 15
+dx   : 50
+dy   : 50
+
+###############
+### Polygon ###
+###############
+
+data_has_polygon : False
+polygon_data     : ''
+
+####################
+### PointManager ###
+####################
+
+###Outlets
+# 'random'    - generate n random points
+# 'import'    - import points
+# 'composite' - add n random points to imported points
+outlets_mode    : 'import'
+outlets_data    : [[25, 375]]
+outlets_number  : 1    #if random or composite, how many outlets to generate
+outlets_shuffle : False #if False: do not shuffle outlet order, if True: shuffle outlet order randomly
+outlets_importance : [1] #how to iterate over outlets: length of array indicates number of iterations, each integer indicates number of outlets in that iteration, sum of integers = total number of outlets
+#to run each outlet separately:              [1,1,1,...]  
+
+###Inlets
+# 'random'    - generate n random points
+# 'import'    - import points
+# 'composite' - add n random points to imported points
+inlets_mode    : 'import'
+inlets_data    : [[1275, 375]]
+inlets_number  : 1      #if random or composite, how many inlets to generate
+inlets_shuffle : False   #if False: do not shuffle inlet order, if True: shuffle inlet order randomly
+inlets_per_outlet : [1]    #how many inlets to assign to each outlet : length of array=number of outlets, each integer=number of inlets to assign to that outlet, sum of integers=total number of inlets
+inlets_importance : [1]  #how to iterate over inlets: length of array indicates number of inlet iterations, each integer indicates number of inlets to run in that iteration, sum of integers = total number of inlets
+
+######################
+### GeologyManager ###
+######################
+#Mode options:
+# 'null'   - No geology/topography/fractures/etc.
+# 'import' - Import from 
+# 'gslib'  - Import from gslib file
+# 'csv'    - Import from csv file
+# 'image'  - Import from image
+# 'topo'   - For orientations only: generate from a 2D topographic surface
+# 'random' - For fractures only: randomly generate a fracture field
+
+#Topography
+topography_mode      : 'null'          #null, gslib, csv, or image
+topography_datafile  : ''
+
+#Geology
+geological_mode      : 'null'        #null, import, gslib, csv, or image
+geological_datafile  : ''
+
+#Orientation (not needed for isotropic)
+orientation_mode     : 'null'       
+orientation_datafile : ''
+
+#Faults
+faults_mode          : 'null'       #null, import, gslib, csv, image
+faults_datafile      : ''
+
+#Fractures
+fractures_mode       : 'random'        #null, import, gslib, csv, image, or random
+fractures_datafile   : ''
+
+# If fractures mode is 'random'
+fractures_densities       : [0.00005, 0.0001]
+fractures_min_orientation : [    340,     70]
+fractures_max_orientation : [     20,    110]
+
+# For fracture size
+fractures_alpha      : 2
+fractures_min_length : 20
+fractures_max_length : 500
+
+###############################
+### Fast-Marching Algorithm ###
+###############################
+algorithm      : 'Isotropic2'   #'Isotropic2', 'Riemann2', which algo to use, see agd-hfm library doc for all options
+
+#Travel cost through each feature (higher is harder to cross that feature)
+cost_out       : 0.999
+cost_aquifer   : 0.4
+cost_aquiclude : 0.8
+cost_faults    : 0.2
+cost_fractures : 0.2
+cost_conduits  : 0.1
+cost_ratio     : 0.5    # ratio of travel cost parallel/perpendicular to gradient
+
+### Formation to consider and FMM code associated
+geology_id     : [1,2] # Only for 'import' geological mode
+geology_cost   : [cost_aquifer,cost_aquiclude]
+
+#############
+### Other ###
+#############
+
+rand_seed : 0  # if 0 = total random
+verbosity : 0  # 0: display minimal output, 1: display some output; 2: display maximum output
+...
