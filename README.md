@@ -22,6 +22,8 @@ To use basic functionality (i.e., without being able to use `pyKasso`), all depe
 
 If you want to use `pyKasso`, first follow the description given for [the `pyKasso` version for `CFPy`](https://github.com/randlab/pyKasso/tree/cfpy). After setting up `pyKasso`, you can proceed with installing `CFPy`: download the source code as `.zip` and unpack it on your machine. In the command line (or in the `Anaconda Prompt` / `Anaconda PowerShell Prompt`) navigate to the unpacked folder (e.g., `C:\User\...\CFPy-main`). Install the package via `pip install .` (don't forget the "." at the end).
 
+If you encounter an OpenSSL-related error: go to `.../anaconda3/lib/bin`, copy `libcrypto-1_1-x64.dll` and `libssl-1_1-x64.dll` and paste them to `.../anaconda3/dlls`.
+
 # CFPy_Examples:
 Note: make sure you have pyKasso (and its dependencies) installed if you want to use the full functionality of CFPy!
 
