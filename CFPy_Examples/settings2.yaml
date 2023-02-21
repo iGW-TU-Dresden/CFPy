@@ -76,7 +76,7 @@ fractures_min_orientation : [    340,    70]
 fractures_max_orientation : [     20,   110]
 
 # For fracture size
-alpha : 2
+fractures_alpha : 2
 fractures_min_length : 20
 fractures_max_length : 500
 
@@ -95,7 +95,7 @@ cost_ratio     : 0.5
 
 ### Formation to consider and FMM code associated
 geology_id       : [1,2] # Only for 'import' geological mode
-geology_velocity : [code_aquifere,code_aquiclude]
+geology_cost : [cost_aquifer,cost_aquiclude]
 
 #############
 ### Other ###
