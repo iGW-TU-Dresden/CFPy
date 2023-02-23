@@ -71,9 +71,9 @@ fractures_mode       : 'random'        #null, import, gslib, csv, image, or rand
 fractures_datafile   : ''
 
 # If fractures mode is 'generate'
-fractures_densities       : [0.00005,0.0001]
-fractures_min_orientation : [    340,    70]
-fractures_max_orientation : [     20,   110]
+fractures_densities       : [0.00005,0.0005]
+fractures_min_orientation : [    340,   10]
+fractures_max_orientation : [     20,  350]
 
 # For fracture size
 fractures_alpha : 2
@@ -89,8 +89,8 @@ cost_out       : 0.999
 cost_aquifer   : 0.4
 cost_aquiclude : 0.8
 cost_faults    : 0.2
-cost_fractures : 0.2
-cost_conduits  : 0.1
+cost_fractures : 0.01
+cost_conduits  : 0.3
 cost_ratio     : 0.5
 
 ### Formation to consider and FMM code associated
@@ -101,6 +101,6 @@ geology_cost : [cost_aquifer,cost_aquiclude]
 ### Other ###
 #############
 
-rand_seed : 0
+rand_seed : 12
 verbosity : 0
 ...

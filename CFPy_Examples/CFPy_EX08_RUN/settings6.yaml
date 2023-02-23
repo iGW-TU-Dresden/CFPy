@@ -111,6 +111,6 @@ geology_cost   : [cost_aquifer,cost_aquiclude]
 ### Other ###
 #############
 
-rand_seed : 0  # if 0 = total random
+rand_seed : 1  # if 0 = total random
 verbosity : 0  # 0: display minimal output, 1: display some output; 2: display maximum output
 ...
