@@ -206,7 +206,8 @@ class Network(NetworkCreator):
 		self.n_cols = network_[6]
 
 	def plot_network(self, plot_nums=None, rot_x=None, rot_z=None,
-		text_shift=None, dpi=None, kind=None, alpha=None):
+		text_shift=None, dpi=None, kind=None, alpha=None, outlet_nodes=None,
+		inlet_nodes=None, node_size=50):
 		"""
 		plotting the raw conduit network without simulation results
 		
@@ -224,6 +225,15 @@ class Network(NetworkCreator):
 		kind : string specifying whether MODFLOW layer elevations should be
 			interpolated with triangles ("triangular") or with rectangles
 			("rectangular"); default is "rectangular"
+		alpha : the opacity of the MODFLOW layer elevation surfaces where 0 is
+			translucent and 1 is fully opaque; float
+		outlet_nodes : an optional list with node numbers (0-based indexing)
+			representing outlets / spring nodes of the conduit network and if None,
+			all network nodes are drawn equally; list of ints
+		inlet_nodes : an optional list with node numbers (0-based indexing)
+			representing inlet nodes of the conduit network and if None,
+			all network nodes are drawn equally; list of ints
+		node_size : a float representing the size of the drawn nodes; float
 
 		Returns
 		-------
@@ -292,15 +302,25 @@ class Network(NetworkCreator):
 					)
 
 		# scatter node locations
-		for vals in zip(node_numbers, node_x, node_y, node_z):
+		for num, vals in enumerate(zip(node_numbers, node_x, node_y, node_z)):
+			if outlet_nodes is not None and num in outlet_nodes:
+				marker_ = "D"
+				s_ = node_size + 10
+			elif inlet_nodes is not None and num in inlet_nodes:
+				marker_ = "^"
+				s_ = node_size + 10
+			else:
+				marker_ = "o"
+				s_ = node_size
 			self.ax.scatter(
 				vals[1],
 				vals[2],
 				vals[3],
 				zorder=100,
 				color=matplotlib.cm.brg(cnorm(vals[3])),
-				s=40,
-				edgecolors="k"
+				s=s_,
+				edgecolors="k",
+				marker=marker_
 				)
 			if plot_nums == True:
 				props = dict(boxstyle="round", facecolor="white", alpha=0.8)
@@ -382,7 +402,8 @@ class Network(NetworkCreator):
 		return self.ax, xx_center, yy_center
 
 	def plot_results(self, heads, time, layer, n_contours=10, plot_nums=None,
-		rot_x=None, rot_z=None, text_shift=None, dpi=None, alpha=None):
+		rot_x=None, rot_z=None, text_shift=None, dpi=None, alpha=None,
+		outlet_nodes=None, inlet_nodes=None, node_size=50):
 		"""
 		plotting the conduit network with simulation results as contour lines
 		
@@ -404,6 +425,15 @@ class Network(NetworkCreator):
 		kind : string specifying whether MODFLOW layer elevations should be
 			interpolated with triangles ("triangular") or with rectangles
 			("rectangular"); default is "rectangular"
+		alpha : the opacity of the MODFLOW layer elevation surfaces where 0 is
+			translucent and 1 is fully opaque; float
+		outlet_nodes : an optional list with node numbers (0-based indexing)
+			representing outlets / spring nodes of the conduit network and if None,
+			all network nodes are drawn equally; list of ints
+		inlet_nodes : an optional list with node numbers (0-based indexing)
+			representing inlet nodes of the conduit network and if None,
+			all network nodes are drawn equally; list of ints
+		node_size : a float representing the size of the drawn nodes; float
 		"""
 
 		if plot_nums is None:
@@ -425,7 +455,10 @@ class Network(NetworkCreator):
 			rot_z=rot_z,
 			text_shift=text_shift,
 			dpi=dpi,
-			alpha=alpha
+			alpha=alpha,
+			outlet_nodes=outlet_nodes,
+			inlet_nodes=inlet_nodes,
+			node_size=node_size
 			)
 
 		contourdata = np.array(heads[time, layer - 1, :, :])
