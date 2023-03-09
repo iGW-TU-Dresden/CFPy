@@ -34,7 +34,7 @@ Install `CFPy` from source in a (new) environment with Python 3.9.
     + **Activate the environment** by typing  `conda activate cfpy_env` and pressing `[Enter]` (and **do NOT close** Anaconda PowerShell Prompt)
 - **Install** `CFPy`
     + Remain in Anaconda PowerShell Prompt with the `cfpy_env` environment activated
-    + To **install** `CFPy`, type `pip install -e <YourPathToCFPy>` and replace `<YourPathToCFPy>` with your path to `CFPy` source files from earlier, e.g., `C:/Users/.../CFPy-main` and press `[Enter]` (if user input is asked - typically for confirming the installation, press `[y]` and `[Enter]` to confirm)
+    + To **install** `CFPy`, type `pip install -e <YourPathToCFPy>` and replace `<YourPathToCFPy>` with your path to `CFPy` source files from earlier, e.g., `C:/Users/.../CFPy-main`, and press `[Enter]` (if user input is asked - typically for confirming the installation, press `[y]` and `[Enter]` to confirm)
     + Optionally, you can install `Jupyter Notebooks` / `Jupyter Lab` (all `CFPy` examples are in this format) in the `cfpy_env` environment by typing `conda install -c conda-forge jupyterlab` and pressing `[Enter]` (if user input is asked - typically for confirming the installation, press `[y]` and `[Enter]` to confirm); make sure that the `cfpy_env` is still activated
 
 You are now ready to use `CFPy`! To use `CFPy` in a `Jupyter Notebook` (typical application) at any time:
@@ -65,7 +65,7 @@ You are now ready to use `CFPy`! To use `CFPy` in a `Jupyter Notebook` (typical 
     + **Unpack** the ZIP (it should be called `karstnet-master.zip`) on your machine
     + **Get the directory path** where the unpacked `karstnet` source files are now stored (e.g., `C:/Users/.../karstnet-master`) by checking the directory of the file `setup.py` in the `karstnet-master` directory
     + Remain in Anaconda PowerShell Prompt with the `pykasso2D` environment activated
-    + To **install** `karstnet`, type `pip install -e <YourPathTokarstnet>` and replace `<YourPathTokarstnet>` with your path to `karstnet` source files from earlier, e.g., `C:/Users/.../karstnet-master` and press `[Enter]` (if user input is asked - typically for confirming the installation, press `[y]` and `[Enter]` to confirm) and **do NOT close** Anaconda PowerShell Prompt
+    + To **install** `karstnet`, type `pip install -e <YourPathTokarstnet>` and replace `<YourPathTokarstnet>` with your path to `karstnet` source files from earlier, e.g., `C:/Users/.../karstnet-master`, and press `[Enter]` (if user input is asked - typically for confirming the installation, press `[y]` and `[Enter]` to confirm) and **do NOT close** Anaconda PowerShell Prompt
 - **Install** `pyKasso`
     + Remain in Anaconda PowerShell Prompt with the `pykasso2D` environment activated
     + To **install** `pyKasso`, type `pip install -e <YourPathTopyKasso>` and replace `<YourPathTopyKasso>` with your path to `pyKasso` source files from earlier, e.g., `C:/Users/.../pyKasso-cfpy` and press `[Enter]` (if user input is asked - typically for confirming the installation, press `[y]` and `[Enter]` to confirm) and **do NOT close** Anaconda PowerShell Prompt
@@ -74,7 +74,7 @@ You are now ready to use `CFPy`! To use `CFPy` in a `Jupyter Notebook` (typical 
     + **Unpack** the ZIP (it should be called `CFPy-main.zip`) on your machine
     + **Get the directory path** where the unpacked `CFPy` source files are now stored (e.g., `C:/Users/.../CFPy-main`) by checking the directory of the file `setup.py` in the `CFPy-main` directory
     + Remain in Anaconda PowerShell Prompt with the `pykasso2D` environment activated
-    + To **install** `CFPy`, type `pip install -e <YourPathToCFPy>` and replace `<YourPathToCFPy>` with your path to `CFPy` source files from earlier, e.g., `C:/Users/.../CFPy-main` and press `[Enter]` (if user input is asked - typically for confirming the installation, press `[y]` and `[Enter]` to confirm)
+    + To **install** `CFPy`, type `pip install -e <YourPathToCFPy>` and replace `<YourPathToCFPy>` with your path to `CFPy` source files from earlier, e.g., `C:/Users/.../CFPy-main`, and press `[Enter]` (if user input is asked - typically for confirming the installation, press `[y]` and `[Enter]` to confirm)
     + Optionally, you can install `Jupyter Notebooks` / `Jupyter Lab` (all `CFPy` examples are in this format) in the `pykasso2D` environment by typing `conda install -c conda-forge jupyterlab` and pressing `[Enter]` (if user input is asked - typically for confirming the installation, press `[y]` and `[Enter]` to confirm); make sure that the `pykasso2D` is still activated
 
 You are now ready to use `CFPy` together with `pyKasso`! To use `CFPy` with `pyKasso` in a `Jupyter Notebook` (typical application) at any time:
