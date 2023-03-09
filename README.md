@@ -17,7 +17,7 @@ If you want to contribute to the package (e.g., changing the code or adding exam
 See the beginning of the individual example notebooks for more information on `Python` and package versions.
 
 # Installation
-The installation is described specifically for using the [Anaconda distribution](https://www.anaconda.com/products/distribution) of Python / using `conda` environments.
+The installation is described specifically for using the [Anaconda distribution](https://www.anaconda.com/products/distribution) of Python / using `conda` environments. If you encounter an OpenSSL-related error during one of the following steps, go to `.../anaconda3/lib/bin`, copy `libcrypto-1_1-x64.dll` and `libssl-1_1-x64.dll` and paste them to `.../anaconda3/dlls`, and continue regularly afterwards.
 ## Installation of `CFPy` only (without `pyKasso`)
 #### For experienced users
 Install `CFPy` from source in a (new) environment with Python 3.9.
@@ -27,7 +27,7 @@ Install `CFPy` from source in a (new) environment with Python 3.9.
     + Make sure that you are in the `main` branch (see upper left of the page)
     + **Download** the files by pressing the green "Code" button in the upper right of the page and selecting "Download ZIP"
     + **Unpack** the ZIP (it should be called `CFPy-main.zip`) on your machine
-    + **Get the directory path** where the `CFPy` source files are now stored (e.g., `C:/Users/.../CFPy-main`) by, checking the directory of the file `setup.py` in the `CFPy-main` directory
+    + **Get the directory path** where the unpacked `CFPy` source files are now stored (e.g., `C:/Users/.../CFPy-main`) by checking the directory of the file `setup.py` in the `CFPy-main` directory
 - **Create a new environment** for `CFPy`
     + **Open Anaconda PowerShell Prompt** on your machine
     + To **create a new environment**, type `conda create -n cfpy_env python=3.9` and press `[Enter]` (if user input is asked - typically for confirming the installation, press `[y]` and `[Enter]` to confirm)
@@ -49,9 +49,38 @@ You are now ready to use `CFPy`! To use `CFPy` in a `Jupyter Notebook` (typical 
 - Install [`karstnet`](https://github.com/karstnet/karstnet) in this environment (from source)
 - Install `CFPy` in this environment (from source)
 
-First follow the description given for [the `pyKasso` version for `CFPy`](https://github.com/randlab/pyKasso/tree/cfpy). After setting up `pyKasso`, you can proceed with installing `CFPy`: download the source code as `.zip` and unpack it on your machine. In the command line (or in the `Anaconda Prompt` / `Anaconda PowerShell Prompt`) navigate to the unpacked folder (e.g., `C:\User\...\CFPy-main`). Install the package via `pip install .` (don't forget the "." at the end).
+#### For inexperienced users
+- **Download** the `pyKasso` source code from [here](https://github.com/randlab/pyKasso/tree/cfpy)
+    + Make sure that you are in the `main` branch (see upper left of the page)
+    + **Download** the files by pressing the green "Code" button in the upper right of the page and selecting "Download ZIP"
+    + **Unpack** the ZIP (it should be called `pyKasso-cfpy.zip`) on your machine
+    + **Get the file path** of the `ènvironment.yml` from the unpacked `pyKasso` source directory (e.g., `C:/Users/.../pyKasso-cfpy/environment.yml`
+    + **Get the directory path** where the unpacked `pyKasso` source files are now stored (e.g., `C:/Users/.../pyKasso-cfpy`) by checking the directory of the file `setup.py` in the `pyKasso-cfpy` directory
+- **Create a new environment** for `pyKasso`
+    + **Open Anaconda PowerShell Prompt** on your machine
+    + To **create a new environment** from the `environment.yml` file, type `conda create -f <YourPathTo/environment.yml>` (where you replace `<YourPathTo/environment.yml>` with the path you got before) and press `[Enter]` (if user input is asked - typically for confirming the installation, press `[y]` and `[Enter]` to confirm)
+    + **Activate the environment** by typing  `conda activate pykasso2D` and pressing `[Enter]` (and **do NOT close** Anaconda PowerShell Prompt)
+- **Download and install** `karstnet`
+    + **Download** the `karstnet` yource files from [here](https://github.com/karstnet/karstnet) by pressing the green "Code" button in the upper right of the page and selecting "Download ZIP"
+    + **Unpack** the ZIP (it should be called `karstnet-master.zip`) on your machine
+    + **Get the directory path** where the unpacked `karstnet` source files are now stored (e.g., `C:/Users/.../karstnet-master`) by checking the directory of the file `setup.py` in the `karstnet-master` directory
+    + Remain in Anaconda PowerShell Prompt with the `pykasso2D` environment activated
+    + To **install** `karstnet`, type `pip install -e <YourPathTokarstnet>` and replace `<YourPathTokarstnet>` with your path to `karstnet` source files from earlier, e.g., `C:/Users/.../karstnet-master` and press `[Enter]` (if user input is asked - typically for confirming the installation, press `[y]` and `[Enter]` to confirm) and **do NOT close** Anaconda PowerShell Prompt
+- **Install** `pyKasso`
+    + Remain in Anaconda PowerShell Prompt with the `pykasso2D` environment activated
+    + To **install** `pyKasso`, type `pip install -e <YourPathTopyKasso>` and replace `<YourPathTopyKasso>` with your path to `pyKasso` source files from earlier, e.g., `C:/Users/.../pyKasso-cfpy` and press `[Enter]` (if user input is asked - typically for confirming the installation, press `[y]` and `[Enter]` to confirm) and **do NOT close** Anaconda PowerShell Prompt
+- **Download and install** `CFPy`
+    + **Download** the `CFPy` yource files from [here](https://github.com/iGW-TU-Dresden/CFPy/tree/main) by pressing the green "Code" button in the upper right of the page and selecting "Download ZIP"
+    + **Unpack** the ZIP (it should be called `CFPy-main.zip`) on your machine
+    + **Get the directory path** where the unpacked `CFPy` source files are now stored (e.g., `C:/Users/.../CFPy-main`) by checking the directory of the file `setup.py` in the `CFPy-main` directory
+    + Remain in Anaconda PowerShell Prompt with the `pykasso2D` environment activated
+    + To **install** `CFPy`, type `pip install -e <YourPathToCFPy>` and replace `<YourPathToCFPy>` with your path to `CFPy` source files from earlier, e.g., `C:/Users/.../CFPy-main` and press `[Enter]` (if user input is asked - typically for confirming the installation, press `[y]` and `[Enter]` to confirm)
+    + Optionally, you can install `Jupyter Notebooks` / `Jupyter Lab` (all `CFPy` examples are in this format) in the `pykasso2D` environment by typing `conda install -c conda-forge jupyterlab` and pressing `[Enter]` (if user input is asked - typically for confirming the installation, press `[y]` and `[Enter]` to confirm); make sure that the `pykasso2D` is still activated
 
-If you encounter an OpenSSL-related error: go to `.../anaconda3/lib/bin`, copy `libcrypto-1_1-x64.dll` and `libssl-1_1-x64.dll` and paste them to `.../anaconda3/dlls`.
+You are now ready to use `CFPy` together with `pyKasso`! To use `CFPy` with `pyKasso` in a `Jupyter Notebook` (typical application) at any time:
+- Open Anaconda PowerShell prompt
+- Activate the environment via the command `conda activate pykasso2D`
+- Open `Jupyter Lab` via the command `jupyter lab`
 
 # CFPy_Examples:
 Note: make sure you have pyKasso (and its dependencies) installed if you want to use the full functionality of CFPy!
