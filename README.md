@@ -23,7 +23,7 @@ The installation is described specifically for using the [Anaconda distribution]
 Install `CFPy` from source in a (new) environment with Python 3.9.
 
 #### For inexperienced users
-- **Download** the `CFPy` source code from [`Github`](https://github.com/iGW-TU-Dresden/CFPy/tree/main)
+- **Download** the `CFPy` source code [here](https://github.com/iGW-TU-Dresden/CFPy/tree/main)
     + Make sure that you are in the `main` branch (see upper left of the page)
     + **Download** the files by pressing the green "Code" button in the upper right of the page and selecting "Download ZIP"
     + **Unpack** the ZIP (it should be called `CFPy-main.zip`) on your machine
