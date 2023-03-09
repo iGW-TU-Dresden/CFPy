@@ -8,19 +8,48 @@ If you want to contribute to the package (e.g., changing the code or adding exam
 
 ### Dependencies:
 - `python` >= 3.9, < 3.11
-- `numpy`>= 1.18.5, <1.25.0
-- `matplotlib`>= 3.3.4, <3.6.0
-- `pandas`>= 1.2.1
-- `flopy`>= 3.3.3
-- `pykasso`= 0.1.0 (OPTIONAL)
+- `numpy` >= 1.18.5, <1.25.0
+- `matplotlib` >= 3.3.4, <3.6.0
+- `pandas` >= 1.2.1
+- `flopy` >= 3.3.3
+- `pykasso` = 0.1.0 (OPTIONAL)
 
 See the beginning of the individual example notebooks for more information on `Python` and package versions.
 
-
 # Installation
-To use basic functionality (i.e., without being able to use `pyKasso`), all dependencies are automatically installed when installing `CFPy` from source (see below). Just make sure that you have 3.9 <= Python <= 3.10 installed in your environment.
+The installation is described specifically for using the [Anaconda distribution](https://www.anaconda.com/products/distribution) of Python / using `conda` environments.
+## Installation of `CFPy` only (without `pyKasso`)
+#### For experienced users
+Install `CFPy` from source in a (new) environment with Python 3.9.
 
-If you want to use `pyKasso`, first follow the description given for [the `pyKasso` version for `CFPy`](https://github.com/randlab/pyKasso/tree/cfpy). After setting up `pyKasso`, you can proceed with installing `CFPy`: download the source code as `.zip` and unpack it on your machine. In the command line (or in the `Anaconda Prompt` / `Anaconda PowerShell Prompt`) navigate to the unpacked folder (e.g., `C:\User\...\CFPy-main`). Install the package via `pip install .` (don't forget the "." at the end).
+#### For inexperienced users
+- **Download** the `CFPy` source code from [`Github`](https://github.com/iGW-TU-Dresden/CFPy/tree/main)
+    + Make sure that you are in the `main` branch (see upper left of the page)
+    + **Download** the files by pressing the green "Code" button in the upper right of the page and selecting "Download ZIP"
+    + **Unpack** the ZIP (it should be called `CFPy-main.zip`) on your machine
+    + **Get the directory path** where the `CFPy` source files are now stored (e.g., `C:/Users/.../CFPy-main`) by, checking the directory of the file `setup.py` in the `CFPy-main` directory
+- **Create a new environment** for `CFPy`
+    + **Open Anaconda PowerShell Prompt** on your machine
+    + To **create a new environment**, type `conda create -n cfpy_env python=3.9` and press `[Enter]` (if user input is asked - typically for confirming the installation, press `[y]` and `[Enter]` to confirm)
+    + **Activate the environment** by typing  `conda activate cfpy_env` and pressing `[Enter]` (and **do NOT close** Anaconda PowerShell Prompt)
+- **Install** `CFPy`
+    + Remain in Anaconda PowerShell Prompt with the `cfpy_env` environment activated
+    + To **install** `CFPy`, type `pip install -e <YourPathToCFPy>` and replace `<YourPathToCFPy>` with your path to `CFPy` source files from earlier, e.g., `C:/Users/.../CFPy-main` and press `[Enter]` (if user input is asked - typically for confirming the installation, press `[y]` and `[Enter]` to confirm)
+    + Optionally, you can install `Jupyter Notebooks` / `Jupyter Lab` (all `CFPy` examples are in this format) in the `cfpy_env` environment by typing `conda install -c conda-forge jupyterlab` and pressing `[Enter]` (if user input is asked - typically for confirming the installation, press `[y]` and `[Enter]` to confirm); make sure that the `cfpy_env` is still activated
+
+You are now ready to use `CFPy`! To use `CFPy` in a `Jupyter Notebook` (typical application) at any time:
+- Open Anaconda PowerShell prompt
+- Activate the environment via the command `conda activate cfpy_env`
+- Open `Jupyter Lab` via the command `jupyter lab`
+
+## Installation of `CFPy` with `pyKasso`
+#### For experienced users
+- Download `pyKasso` source files from the `cfpy` branch [here](https://github.com/randlab/pyKasso/tree/cfpy)
+- Create a new environment from the `environment.yml`
+- Install [`karstnet`](https://github.com/karstnet/karstnet) in this environment (from source)
+- Install `CFPy` in this environment (from source)
+
+First follow the description given for [the `pyKasso` version for `CFPy`](https://github.com/randlab/pyKasso/tree/cfpy). After setting up `pyKasso`, you can proceed with installing `CFPy`: download the source code as `.zip` and unpack it on your machine. In the command line (or in the `Anaconda Prompt` / `Anaconda PowerShell Prompt`) navigate to the unpacked folder (e.g., `C:\User\...\CFPy-main`). Install the package via `pip install .` (don't forget the "." at the end).
 
 If you encounter an OpenSSL-related error: go to `.../anaconda3/lib/bin`, copy `libcrypto-1_1-x64.dll` and `libssl-1_1-x64.dll` and paste them to `.../anaconda3/dlls`.
 
