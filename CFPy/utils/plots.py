@@ -409,8 +409,8 @@ class Network(NetworkCreator):
 		self.ax.tick_params(which='minor', color='r')
 
 		if n_rows < 20 and n_cols < 20:
-			self.ax.set_xticklabels([i for i in range(n_cols)], minor=True)
-			self.ax.set_yticklabels([i for i in range(n_rows)], minor=True)
+			self.ax.set_xticklabels([i for i in range(1, n_cols + 1)], minor=True)
+			self.ax.set_yticklabels([i for i in range(1, n_rows + 1)], minor=True)
 		else:
 			self.ax.set_xticklabels([i for i in range(0, n_cols, 5)], minor=True)
 			self.ax.set_yticklabels([i for i in range(0, n_rows, 5)], minor=True)
@@ -424,7 +424,7 @@ class Network(NetworkCreator):
 
 		self.ax.set_xlabel("Columns")
 		self.ax.set_ylabel("Rows")
-		self.ax.set_zlabel("z")
+		self.ax.set_zlabel("Elevation Above Datum")
 		self.ax.set_title("Node and Conduit Network", loc="center", y=0.9)
 		
 		# set view
