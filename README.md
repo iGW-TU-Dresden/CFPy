@@ -7,12 +7,13 @@ CFPy - a Python package for the generation of MODFLOW-CFP specific input files (
 If you want to contribute to the package (e.g., changing the code or adding examples), please generally use the `dev` branch for commits (especially for changes to the source code!). New examples can also be directly committed to the `main` branch.
 
 ### Dependencies:
-- `python` >= 3.9, < 3.11
+- `python` >= 3.9, < 3.11 (without `pyKasso`), == 3.9 (with `pyKasso`)
 - `numpy` >= 1.18.5, <1.25.0
 - `matplotlib` >= 3.3.4, <3.6.0
 - `pandas` >= 1.2.1
 - `flopy` >= 3.3.3
-- `pykasso` = 0.1.0 (OPTIONAL)
+- `watermark` >= 2.3.0
+- `pykasso` == 0.1.0 (OPTIONAL)
 
 See the beginning of the individual example notebooks for more information on `Python` and package versions.
 
@@ -20,7 +21,7 @@ See the beginning of the individual example notebooks for more information on `P
 The installation is described specifically for using the [Anaconda distribution](https://www.anaconda.com/products/distribution) of Python / using `conda` environments. If you encounter an OpenSSL-related error during one of the following steps, go to `.../anaconda3/lib/bin`, copy `libcrypto-1_1-x64.dll` and `libssl-1_1-x64.dll` and paste them to `.../anaconda3/dlls`, and continue regularly afterwards.
 ## Installation of `CFPy` only (without `pyKasso`)
 #### For experienced users
-Install `CFPy` from source in a (new) environment with Python 3.9.
+Install `CFPy` from source in a (new) environment with Python >= 3.9.
 
 #### For inexperienced users
 - **Download** the `CFPy` source code [here](https://github.com/iGW-TU-Dresden/CFPy/tree/main)
@@ -44,6 +45,7 @@ You are now ready to use `CFPy`! To use `CFPy` in a `Jupyter Notebook` (typical 
 
 ## Installation of `CFPy` with `pyKasso`
 #### For experienced users
+- create a new / activate an existing environment environment with Python == 3.9.
 - Download `pyKasso` source files from the `cfpy` branch [here](https://github.com/randlab/pyKasso/tree/cfpy)
 - Create a new environment from the `environment.yml`
 - Install [`karstnet`](https://github.com/karstnet/karstnet) in this environment (from source)
