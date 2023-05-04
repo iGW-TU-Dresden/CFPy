@@ -180,7 +180,8 @@ class FileReader(Postprocessor):
 				"temp_node.csv",
 				header=None,
 				delim_whitespace=True,
-				names=node_header
+				names=node_header,
+				index_col=False
 				)
 
 			# remove temporary file
@@ -242,7 +243,8 @@ class FileReader(Postprocessor):
 				"temp_tube.csv",
 				header=None,
 				delim_whitespace=True,
-				names=tube_header
+				names=tube_header,
+				index_col=False
 				)
 
 			# remove temporary file
