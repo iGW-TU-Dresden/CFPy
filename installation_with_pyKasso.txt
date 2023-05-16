@@ -1,0 +1,16 @@
+
+
+1. in anaconda prompt:
+	conda env create --file C:/.../environment_full.yml
+
+2. in anaconda prompt (in the created environment):
+	pip install -e Your/Path/To/Karstnet-Master
+
+3. in anaconda prompt (in the created environment):
+	pip install -e Your/Path/To/pyKasso-CFPy
+
+4. in anaconda prompt (in the created environment):
+	pip install -e Your/Path/To/CFPy-Main
+
+5. in anaconda prompt (in the created environment):
+	pip install watermark

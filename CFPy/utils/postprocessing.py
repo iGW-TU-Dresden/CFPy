@@ -180,7 +180,8 @@ class FileReader(Postprocessor):
 				"temp_node.csv",
 				header=None,
 				delim_whitespace=True,
-				names=node_header
+				names=node_header,
+				index_col=False
 				)
 
 			# remove temporary file
@@ -197,7 +198,15 @@ class FileReader(Postprocessor):
 				#    if the string "TUBE  B  E" is present in the current line
 				#    if yes, save the line below this string that corresponds 
 				# 	 to the currently checked tube number
-				if "TUBE  B  E" in line:
+
+				## !!!!
+				## IMPORTANT
+				## !!!!
+				# 	when using the CFPv2 from Thomas (his "personal" dev version which is
+				#		the version we supply on GitHub), you can use the code as-is
+				# 	if you are using the "original" CFPv2 from the TUD dowloads, you
+				#		have to change the string  from "TUBE    B    E" to "TUBE  B  E"
+				if "TUBE    B    E" in line:
 					# handle the case when there is the warning:
 					# 	"WARNING! TUBE X ACTIVE BUT NO FLOW" somewhere in the 
 					# 	reported results
@@ -234,7 +243,8 @@ class FileReader(Postprocessor):
 				"temp_tube.csv",
 				header=None,
 				delim_whitespace=True,
-				names=tube_header
+				names=tube_header,
+				index_col=False
 				)
 
 			# remove temporary file

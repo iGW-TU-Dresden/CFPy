@@ -11,6 +11,7 @@ import copy
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.ticker as tck
 
 class NetworkCreator():
 
@@ -206,7 +207,8 @@ class Network(NetworkCreator):
 		self.n_cols = network_[6]
 
 	def plot_network(self, plot_nums=None, rot_x=None, rot_z=None,
-		text_shift=None, dpi=None, kind=None, alpha=None):
+		text_shift=None, dpi=None, kind=None, alpha=None, outlet_nodes=None,
+		inlet_nodes=None, node_size=50, delr=None, delc=None):
 		"""
 		plotting the raw conduit network without simulation results
 		
@@ -224,6 +226,19 @@ class Network(NetworkCreator):
 		kind : string specifying whether MODFLOW layer elevations should be
 			interpolated with triangles ("triangular") or with rectangles
 			("rectangular"); default is "rectangular"
+		alpha : the opacity of the MODFLOW layer elevation surfaces where 0 is
+			translucent and 1 is fully opaque; float
+		outlet_nodes : an optional list with node numbers (0-based indexing)
+			representing outlets / spring nodes of the conduit network and if None,
+			all network nodes are drawn equally; list of ints
+		inlet_nodes : an optional list with node numbers (0-based indexing)
+			representing inlet nodes of the conduit network and if None,
+			all network nodes are drawn equally; list of ints
+		node_size : a float representing the size of the drawn nodes; float
+		delr : the uniform row spacing of MODFLOW cells, if None, quadratic
+			cells are used; float
+		delc : the uniform column spacing of MODFLOW cells, if None, quadratic
+			cells are used; float
 
 		Returns
 		-------
@@ -259,6 +274,13 @@ class Network(NetworkCreator):
 		self.fig = plt.figure(figsize=(10, 10), dpi=dpi)
 		self.ax = self.fig.add_subplot(111, projection="3d")
 		cnorm = matplotlib.colors.Normalize(vmin=min(node_z), vmax=max(node_z))
+
+		# if delr and delc are given, set the aspect
+		if delr is not None and delc is not None:
+			# the first aspect value sets the aspect of the x-axis (along a row)
+			# the second aspect value sets the aspect of the y-axis (along a col)
+			# the third aspect value sets the aspect of the z-axis (always 1)
+			self.ax.set_box_aspect((delc / delr, delr / delc, 1))
 		
 		# plot pipe locations
 		for num, pipe in enumerate(pipes_coords):
@@ -292,15 +314,25 @@ class Network(NetworkCreator):
 					)
 
 		# scatter node locations
-		for vals in zip(node_numbers, node_x, node_y, node_z):
+		for num, vals in enumerate(zip(node_numbers, node_x, node_y, node_z)):
+			if outlet_nodes is not None and num in outlet_nodes:
+				marker_ = "D"
+				s_ = node_size + 10
+			elif inlet_nodes is not None and num in inlet_nodes:
+				marker_ = "^"
+				s_ = node_size + 10
+			else:
+				marker_ = "o"
+				s_ = node_size
 			self.ax.scatter(
 				vals[1],
 				vals[2],
 				vals[3],
 				zorder=100,
 				color=matplotlib.cm.brg(cnorm(vals[3])),
-				s=40,
-				edgecolors="k"
+				s=s_,
+				edgecolors="k",
+				marker=marker_
 				)
 			if plot_nums == True:
 				props = dict(boxstyle="round", facecolor="white", alpha=0.8)
@@ -357,21 +389,42 @@ class Network(NetworkCreator):
 			else:
 				raise ValueError("attribute 'kind' has to be either 'rectangular' or 'triangular'!")
 		
-		# self.ax.invert_zaxis()
+		# invert y-axis to correspond to MODFLOW way of indexing
 		self.ax.invert_yaxis()
-		self.ax.grid(True, which="major")
-		if n_cols < 20:
-			self.ax.set_xticks([i for i in range(1, n_cols + 1)])
+
+		# adjust ticks if necessary
+		# self.ax.xaxis.set_minor_locator(tck.FixedLocator([i - 0.5 for i in range(1, n_cols + 1)]))
+		# self.ax.yaxis.set_minor_locator(tck.FixedLocator([i - 0.5 for i in range(1, n_rows + 1)]))
+		# 
+		# self.ax.xaxis.set_major_locator(tck.FixedLocator([i for i in range(1, n_cols + 1)]))
+		# self.ax.yaxis.set_major_locator(tck.FixedLocator([i for i in range(1, n_rows + 1)]))
+
+		self.ax.set_xticks([i - 0.5 for i in range(1, n_cols + 1)], minor=True)
+		self.ax.set_yticks([i - 0.5 for i in range(1, n_rows + 1)], minor=True)
+
+		self.ax.set_xticks([i for i in range(1, n_cols + 1)], minor=False)
+		self.ax.set_yticks([i for i in range(1, n_rows + 1)], minor=False)
+		
+		self.ax.tick_params(axis='both', which='minor', labelsize=10)
+		self.ax.tick_params(which='minor', color='r')
+
+		if n_rows < 20 and n_cols < 20:
+			self.ax.set_xticklabels([i for i in range(1, n_cols + 1)], minor=True)
+			self.ax.set_yticklabels([i for i in range(1, n_rows + 1)], minor=True)
 		else:
-			self.ax.set_xticks([i for i in range(1, n_cols + 1, 5)])
-		if n_rows < 20:
-			self.ax.set_yticks([i for i in range(1, n_rows + 1)])
-		else:
-			self.ax.set_yticks([i for i in range(1, n_rows + 1, 5)])
-		# self.ax.set_zticks([i for i in range(1, n_lays + 1)])
+			self.ax.set_xticklabels([i for i in range(0, n_cols, 5)], minor=True)
+			self.ax.set_yticklabels([i for i in range(0, n_rows, 5)], minor=True)
+		
+		self.ax.set_xticklabels([None for i in range(n_cols)])
+		self.ax.set_yticklabels([None for i in range(n_rows)])
+		
+		# add grid
+		# self.ax.grid(True, which="minor", ls=":", lw=0.5)
+		self.ax.grid(True, which="major", ls="-", lw=1)
+
 		self.ax.set_xlabel("Columns")
 		self.ax.set_ylabel("Rows")
-		self.ax.set_zlabel("z")
+		self.ax.set_zlabel("Elevation Above Datum")
 		self.ax.set_title("Node and Conduit Network", loc="center", y=0.9)
 		
 		# set view
@@ -382,7 +435,8 @@ class Network(NetworkCreator):
 		return self.ax, xx_center, yy_center
 
 	def plot_results(self, heads, time, layer, n_contours=10, plot_nums=None,
-		rot_x=None, rot_z=None, text_shift=None, dpi=None, alpha=None):
+		rot_x=None, rot_z=None, text_shift=None, dpi=None, alpha=None,
+		outlet_nodes=None, inlet_nodes=None, node_size=50, delr=None, delc=None):
 		"""
 		plotting the conduit network with simulation results as contour lines
 		
@@ -404,6 +458,19 @@ class Network(NetworkCreator):
 		kind : string specifying whether MODFLOW layer elevations should be
 			interpolated with triangles ("triangular") or with rectangles
 			("rectangular"); default is "rectangular"
+		alpha : the opacity of the MODFLOW layer elevation surfaces where 0 is
+			translucent and 1 is fully opaque; float
+		outlet_nodes : an optional list with node numbers (0-based indexing)
+			representing outlets / spring nodes of the conduit network and if None,
+			all network nodes are drawn equally; list of ints
+		inlet_nodes : an optional list with node numbers (0-based indexing)
+			representing inlet nodes of the conduit network and if None,
+			all network nodes are drawn equally; list of ints
+		node_size : a float representing the size of the drawn nodes; float
+		delr : the uniform row spacing of MODFLOW cells, if None, quadratic
+			cells are used; float
+		delc : the uniform column spacing of MODFLOW cells, if None, quadratic
+			cells are used; float
 		"""
 
 		if plot_nums is None:
@@ -425,7 +492,12 @@ class Network(NetworkCreator):
 			rot_z=rot_z,
 			text_shift=text_shift,
 			dpi=dpi,
-			alpha=alpha
+			alpha=alpha,
+			outlet_nodes=outlet_nodes,
+			inlet_nodes=inlet_nodes,
+			node_size=node_size,
+			delr=delr,
+			delc=delc
 			)
 
 		contourdata = np.array(heads[time, layer - 1, :, :])

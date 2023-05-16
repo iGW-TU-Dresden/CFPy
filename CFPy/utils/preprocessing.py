@@ -498,9 +498,11 @@ class pyKassoValidator(Preprocessor):
 		# iterate over the inlets
 		for i in self.catchment.inlets:
 			# calculate the column index from the x-coordinate
-			loc_x = int(np.floor(i[0] / self.catchment.settings["dx"]))
+			loc_x = int(np.floor((i[0] - self.catchment.settings["x0"]) /
+				self.catchment.settings["dx"]))
 			# calculate the row index from the y-coordinate
-			loc_y = int(np.floor(i[1] / self.catchment.settings["dy"]))
+			loc_y = int(np.floor((i[1] - self.catchment.settings["y0"]) /
+				self.catchment.settings["dy"]))
 			# append the inlet location
 			inlet_locs.append([loc_y, loc_x])
 
@@ -510,9 +512,11 @@ class pyKassoValidator(Preprocessor):
 		# iterate over outlets
 		for i in self.catchment.outlets:
 			# calculate the column index from the x-coordinate
-			loc_x = int(np.floor(i[0] / self.catchment.settings["dx"]))
+			loc_x = int(np.floor((i[0] - self.catchment.settings["x0"]) /
+				self.catchment.settings["dx"]))
 			# calculate the row index from the y-coordinate
-			loc_y = int(np.floor(i[1] / self.catchment.settings["dy"]))
+			loc_y = int(np.floor((i[1] - self.catchment.settings["y0"]) /
+				self.catchment.settings["dy"]))
 			# append the oulet location
 			outlet_locs.append([loc_y, loc_x])
 

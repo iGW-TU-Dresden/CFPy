@@ -24,7 +24,8 @@ setup(
         "numpy>=1.18.5, <1.25.0",
         "matplotlib>=3.3.4",
         "pandas>=1.2.1",
-        "flopy>=3.3.3"
+        "flopy>=3.3.3",
+        "watermark>=2.3.0"
         ],
     packages = find_packages(exclude=[])
     )
