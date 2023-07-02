@@ -23,6 +23,11 @@ class write_input():
         file_extensions=['coc', 'crch', 'cfp']
         ):
         
+        if len(data_strings) != len(file_extensions):
+            raise Exception("The length of given file extensions do not match\
+                            with the length of given data strings!\n Did you\
+                            forget modules?")
+
         self.modelname = modelname
         self.data_strings = data_strings
         self.file_extensions = file_extensions
