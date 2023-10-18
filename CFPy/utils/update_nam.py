@@ -8,7 +8,7 @@ class update_nam():
     files and unit numbers
 
     Dependencies: None
-        
+
     Parameters
     ----------
     modelname : name of the model; str
@@ -16,36 +16,50 @@ class update_nam():
     cfp_unit_num : Fortran unit number for the .cfp file; int
     coc_unit_num : Fortran unit number for the .coc file; int
     crch_unit_num : Fortran unit number for the .crch file; int
-    
+
     NOTE: First, if present, any CFP related entries in the nam file will be
         removed. Then, the nam file is updated according to the users
-        initialization of the update_nam class. 
-        
+        initialization of the update_nam class.
+
+    FIXME: flexible inclusion of data files for stm
     """
-    
+
     def __init__(
         self,
-        modelname, 
+        modelname,
         mode,
         coc_unit_num=23,
         cfp_unit_num=16,
-        crch_unit_num=14
+        crch_unit_num=14,
+        stm_unit_num=None,
+        soc_unit_num=None
         ):
-        
+
         self.modelname = modelname
         self.mode = mode
         self.coc_unit_num = coc_unit_num
         self.cfp_unit_num = cfp_unit_num
         self.crch_unit_num = crch_unit_num
+        self.stm_unit_num = stm_unit_num
+        self.soc_unit_num = soc_unit_num
         self.update = [
             ('COC' + '%17s'%self.coc_unit_num + '  ' +
                 self.modelname + '.coc' + '\n'),
             ('CFP' + '%17s'%self.cfp_unit_num + '  ' +
                 self.modelname + '.cfp' + '\n'),
             ('CRCH' + '%16s'%self.crch_unit_num + '  ' +
-                self.modelname + '.crch')
-            ]
-        
+                self.modelname + '.crch' + '\n')]
+        if stm_unit_num and soc_unit_num:
+            self.update = self.update +\
+            [('STM' + '%16s'%self.stm_unit_num + '  ' +
+                self.modelname + '.stm' + '\n'),
+            ('SOC' + '%16s'%self.soc_unit_num + '  ' +
+                self.modelname + '.soc' + '\n'),
+            ('DATA' + '%16s'%72 + '  ' +
+                'C_NODE.txt' + '\n'),
+            ('DATA' + '%16s'%73 + '  ' +
+                'CWELL1.TXT')]
+
         if self.mode == 2:
             del(self.update[-1])
 
@@ -62,7 +76,7 @@ class update_nam():
         None
         """
 
-        ftypes = ["COC", "CFP", "CRCH"]
+        ftypes = ["COC", "CFP", "CRCH", "STM", "SOC", "DATA"]
 
         # open the existing .nam-file and read the lines
         with open(self.modelname + ".nam", "r") as f:

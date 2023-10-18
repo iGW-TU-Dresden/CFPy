@@ -76,7 +76,7 @@ fractures_min_orientation : [    340,    70]
 fractures_max_orientation : [     20,   110]
 
 # For fracture size
-fractures_alpha : 2
+alpha : 2
 fractures_min_length : 20
 fractures_max_length : 500
 
@@ -85,17 +85,17 @@ fractures_max_length : 500
 ###############################
 algorithm : "Isotropic2" #'Isotropic2', 'Riemann2', which algo to use, see agd-hfm library doc for all options
 
-cost_out       : 0.999
-cost_aquifer   : 0.4
-cost_aquiclude : 0.8
-cost_faults    : 0.2
-cost_fractures : 0.2
-cost_conduits  : 0.1
-cost_ratio     : 0.5
+code_out       : 0.999
+code_aquifere   : 0.4
+code_aquiclude : 0.8
+code_faults    : 0.2
+code_fractures : 0.2
+code_conduits  : 0.1
+code_ratio     : 0.5
 
 ### Formation to consider and FMM code associated
 geology_id       : [1,2] # Only for 'import' geological mode
-geology_cost : [cost_aquifer,cost_aquiclude]
+geology_velocity : [code_aquifere,code_aquiclude]
 importance_factor : [1,2,3]
 
 #############
