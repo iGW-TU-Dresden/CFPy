@@ -1,9 +1,9 @@
 from setuptools import find_packages, setup
 
 setup(
-    name = "CFPy",
+    name = "CFPy_TUD",
     author = "M.G. Rudolph, T. Noffz, L. Grabow, T. Reimann",
-    version = "0.1",
+    version = "0.0.1",
     description = "a Python package for the generation of MODFLOW-CFP "
     "specific input files (.cfp, .crch, .coc). CFPy is the "
     "FloPy-equivalent package for MODFLOW-CFP.",

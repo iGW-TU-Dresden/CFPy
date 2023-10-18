@@ -18,8 +18,14 @@ If you want to contribute to the package (e.g., changing the code or adding exam
 See the beginning of the individual example notebooks for more information on `Python` and package versions.
 
 # Installation
+## The easy way
+`pip install CFPy-TUD`
+
+This installs `CFPy` quickly and easily, however, without `pyKasso`. For instructions on how to install `pyKasso` as well, see below.
+
+## The custom way
 The installation is described specifically for using the [Anaconda distribution](https://www.anaconda.com/products/distribution) of Python / using `conda` environments. If you encounter an OpenSSL-related error during one of the following steps, go to `.../anaconda3/lib/bin`, copy `libcrypto-1_1-x64.dll` and `libssl-1_1-x64.dll` and paste them to `.../anaconda3/dlls`, and continue regularly afterwards.
-## Installation of `CFPy` only (without `pyKasso`)
+### Installation of `CFPy` only (without `pyKasso`)
 #### For experienced users
 Install `CFPy` from source in a (new) environment with Python >= 3.9.
 
