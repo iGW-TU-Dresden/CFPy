@@ -21,7 +21,7 @@ The examples presented here aim to illustrate diverse aspects of geospatial info
 
 For proper execution of the scripts, follow the instruction for CFPy and pyKasso provided [here][CFPy]. Furthermore, supplementary packages are required, which can be installed using `pip`:
 
-`pip install  flopy geopandas mpmath matplotlib notebook numpy pandas pyproj pyshp pyyaml openpyxl rasterio scipy scikit-fmm`
+`pip install flopy geopandas mpmath matplotlib notebook numpy pandas pyproj pyshp pyyaml openpyxl rasterio scipy scikit-fmm`
 
 [Links]: #
 [CFPy]: https://github.com/marcusgenzel/CFPy/tree/dev "Link to CFPy github"
