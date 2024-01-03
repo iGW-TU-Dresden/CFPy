@@ -24,6 +24,6 @@ For proper execution of the scripts, follow the instruction for CFPy and pyKasso
 `pip install  flopy geopandas mpmath matplotlib notebook numpy pandas pyproj pyshp pyyaml openpyxl rasterio scipy scikit-fmm`
 
 [Links]: #
-[CFPy]: https://github.com/marcusgenzel/TUD_GW_MOD/tree/main "Link to CFPy github"
+[CFPy]: https://github.com/marcusgenzel/CFPy/tree/dev "Link to CFPy github"
 
 
