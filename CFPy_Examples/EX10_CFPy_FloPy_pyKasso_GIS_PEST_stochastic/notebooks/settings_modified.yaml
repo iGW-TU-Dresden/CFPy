@@ -1,0 +1,72 @@
+algorithm: Riemann2
+cost_aquiclude: 0.8
+cost_aquifer: 0.4
+cost_conduits: 0.1
+cost_faults: 0.2
+cost_fractures: 0.2
+cost_out: 0.999
+cost_ratio: 0.49
+data_has_polygon: true
+dx: 25
+dy: 25
+faults_datafile: None
+faults_mode: 'null'
+fractures_alpha: 2
+fractures_datafile: None
+fractures_densities:
+- 2.5e-05
+- 2.0e-05
+fractures_max_length: 800
+fractures_max_orientation:
+- 30
+- 90
+fractures_min_length: 50
+fractures_min_orientation:
+- 15
+- 75
+fractures_mode: random
+geological_datafile: c:\GW_GitHub\TUD_GW_MOD\content\02_MSc_Thesis_Karst\01_Synthetic_Example\notebooks\01_data\csv\geo40x48.csv
+geological_mode: csv
+geology_cost:
+- cost_out
+- cost_aquifer
+- cost_aquiclude
+- cost_conduits
+geology_id:
+- 0
+- 1
+- 2
+- 3
+inlets_data:
+- - 321675.8808981737
+  - 3982657.975235402
+- - 321630.4656857662
+  - 3982891.092673218
+- - 321670.07556450844
+  - 3982129.0740536056
+inlets_importance:
+- 1
+inlets_mode: import
+inlets_number: 3
+inlets_per_outlet:
+- 3
+inlets_shuffle: false
+orientation_datafile: inputs/example/contact9x9.csv
+orientation_mode: topo
+outlets_data:
+- - 321083.308854461
+  - 3982384.4707279983
+outlets_importance:
+- 1
+outlets_mode: import
+outlets_number: 1
+outlets_shuffle: false
+polygon_data: c:\GW_GitHub\TUD_GW_MOD\content\02_MSc_Thesis_Karst\01_Synthetic_Example\notebooks\01_data\txt\polygon.txt
+rand_seed: 0
+topography_datafile: inputs/example/dem9x9.csv
+topography_mode: 'null'
+verbosity: 0
+x0: 320857.338297
+xnum: 48
+y0: 3982012.811685344
+ynum: 40
