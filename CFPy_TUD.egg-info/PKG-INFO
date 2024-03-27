@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: CFPy-TUD
-Version: 0.0.1
+Version: 0.0.2
 Summary: a Python package for the generation of MODFLOW-CFP specific input files (.cfp, .crch, .coc). CFPy is the FloPy-equivalent package for MODFLOW-CFP.
 Home-page: https://github.com/iGW-TU-Dresden/CFPy
 Author: M.G. Rudolph, T. Noffz, L. Grabow, T. Reimann
