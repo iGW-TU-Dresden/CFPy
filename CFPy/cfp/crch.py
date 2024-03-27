@@ -125,7 +125,7 @@ class crch():
                             # append the fractionation and well information
                             self.frac.append(str(self.node_numbers[i]) + 
                                 " " + str(self.p_crch[i]) + " " +
-                                str(self.fbc_well[node_iter][1]))
+                                str(self.fbc_well[node_iter][1][0]))
                         # if multiple extraction rates are given (for each
                         #   stress period), use only the value for the current
                         #   stress period
