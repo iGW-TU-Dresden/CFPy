@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "CFPy_TUD"
+version = "0.0.2"
+description = "A Python package for the generation of MODFLOW-CFP specific input files (.cfp, .crch, .coc). CFPy is the FloPy-equivalent package for MODFLOW-CFP."
+authors = [
+    { name = "M.G. Rudolph", email = "max_gustav.rudolph@tu-dresden.de" },
+    { name = "T. Noffz" },
+    { name = "L. Grabow" },
+    { name = "T. Reimann", email = "thomas.reimann@tu-dresden.de" },
+]
+license = { text = "CC0-1.0" }
+requires-python = ">=3.9,<3.11"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Other Audience",
+    "License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Scientific/Engineering :: Hydrology",
+]
+dependencies = [
+    "numpy>=1.18.5,<1.25.0",
+    "matplotlib>=3.3.4",
+    "pandas>=1.2.1",
+    "flopy>=3.3.3",
+    "watermark>=2.3.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/iGW-TU-Dresden/CFPy"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]  # line too long — enforce via line-length above

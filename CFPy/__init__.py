@@ -1,8 +1,11 @@
 __name__ = 'CFPy'
 __author__ = 'Torsten Noffz, Max G. Rudolph'
-major = 1
-minor = 0
-__version__ = '{:d}.{:d}'.format(major, minor)
+
+try:
+    from importlib.metadata import version, PackageNotFoundError
+    __version__ = version("CFPy_TUD")
+except PackageNotFoundError:
+    __version__ = "unknown"
 
 from .cfp import *
 from .utils import *
