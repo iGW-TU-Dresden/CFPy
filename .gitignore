@@ -2,5 +2,6 @@
 __pycache__
 build/*
 CFPy.egg-info/*
-CFPy_TUD.egg_info/*
+CFPy_TUD.egg-info/*
 dist/*
+egu/*
