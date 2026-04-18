@@ -403,10 +403,112 @@ class GeneralValidator(Preprocessor):
 		#	same shape as the node plane
 		if self.elevations is not None:
 			self.network *= self.elevations
-		
+
 		# set validity of the network to True
 		self.valid = True
 		return self.network
+
+	def validate_network_elevations(self):
+		"""
+		Validate a given 2D node network using elevation data from the start.
+		Works like validate_network, but operates on elev_network = self.network
+		* self.elevations instead of self.network. Node presence is detected by
+		non-zero values. When a gap-filling node is added, its elevation is set
+		to the mean of the two diagonal neighbors rather than 1.
+
+		Returns
+		-------
+		network : the validated node network with elevations applied; numpy ndarray
+		"""
+
+		if self.network is None:
+			raise ValueError("No network data is given!")
+		if self.elevations is None:
+			raise ValueError("Node elevations are required for validate_network_elevations!")
+		print("\nAlways visually check the validated network for structural"
+			"correctness! \ni.e., whether branches are correctly isolated or if"
+			"they got connected during processing.")
+
+		if self.flopymodel is not None:
+			if self.network.shape[0] != self.nrows:
+				raise ValueError(f"The network has {self.network.shape[0]} rows"
+					"but the model has {self.nrows} rows!")
+			if self.network.shape[1] != self.ncols:
+				raise ValueError(f"The network has {self.network.shape[1]}"
+					"columns but the model has {self.cols} columns!")
+
+		elev_network = self.network * self.elevations
+
+		for i in range(elev_network.shape[0]):
+			for j in range(elev_network.shape[1]):
+				if elev_network[i, j] == 0.:
+					continue
+				else:
+					if (i > 0 and
+						j > 0 and
+						i < elev_network.shape[0] - 1 and
+						j < elev_network.shape[1] - 1):
+
+						if (elev_network[i-1, j-1] != 0. or
+							elev_network[i-1, j+1] != 0. or
+							elev_network[i+1, j+1] != 0. or
+							elev_network[i+1, j-1] != 0.):
+
+							# up-left diagonal neighbor
+							if elev_network[i-1, j-1] != 0.:
+								if (elev_network[i-1, j] != 0. or
+									elev_network[i, j-1] != 0.):
+									pass
+								else:
+									fill_val = (elev_network[i, j] + elev_network[i-1, j-1]) / 2.
+									if np.random.random() >= 0.5:
+										elev_network[i-1, j] = fill_val
+									else:
+										elev_network[i, j-1] = fill_val
+
+							# up-right diagonal neighbor
+							if elev_network[i-1, j+1] != 0.:
+								if (elev_network[i-1, j] != 0. or
+									elev_network[i, j+1] != 0.):
+									pass
+								else:
+									fill_val = (elev_network[i, j] + elev_network[i-1, j+1]) / 2.
+									if np.random.random() >= 0.5:
+										elev_network[i-1, j] = fill_val
+									else:
+										elev_network[i, j+1] = fill_val
+
+							# down-right diagonal neighbor
+							if elev_network[i+1, j+1] != 0.:
+								if (elev_network[i+1, j] != 0. or
+									elev_network[i, j+1] != 0.):
+									pass
+								else:
+									fill_val = (elev_network[i, j] + elev_network[i+1, j+1]) / 2.
+									if np.random.random() >= 0.5:
+										elev_network[i+1, j] = fill_val
+									else:
+										elev_network[i, j+1] = fill_val
+
+							# down-left diagonal neighbor
+							if elev_network[i+1, j-1] != 0.:
+								if (elev_network[i+1, j] != 0. or
+									elev_network[i, j-1] != 0.):
+									pass
+								else:
+									fill_val = (elev_network[i, j] + elev_network[i+1, j-1]) / 2.
+									if np.random.random() >= 0.5:
+										elev_network[i+1, j] = fill_val
+									else:
+										elev_network[i, j-1] = fill_val
+
+						else:
+							continue
+
+		self.network = elev_network
+		self.valid = True
+		return self.network
+
 
 class pyKassoValidator(Preprocessor):
 	"""
@@ -662,5 +764,136 @@ class pyKassoValidator(Preprocessor):
 			self.network *= self.elevations
 
 		# set validity of the network to true
+		self.valid = True
+		return self.network
+
+	def validate_network_elevations(self):
+		"""
+		Validate a given 2D node network using elevation data from the start.
+		Works like validate_network, but operates on elev_network = self.network
+		* self.elevations instead of self.network. Node presence is detected by
+		non-zero values. When a gap-filling node is added, its elevation is set
+		to the mean of the two diagonal neighbors rather than 1.
+
+		Returns
+		-------
+		network : the validated node network with elevations applied; numpy ndarray
+		"""
+
+		if self.network is None:
+			raise ValueError("No network data (catchment instance) is given!")
+		if self.elevations is None:
+			raise ValueError("Node elevations are required for validate_network_elevations!")
+		print("\nAlways visually check the validated network for structural"
+			"correctness! \ni.e., whether branches are correctly isolated or if"
+			"they got connected during processing.")
+
+		self.network = np.array(
+			self.network.karst_simulations[self.sim_num].maps['karst'][-1]
+			)
+
+		inlet_locs = []
+		for i in self.catchment.inlets:
+			loc_x = int(np.floor((i[0] - self.catchment.settings["x0"]) /
+				self.catchment.settings["dx"]))
+			loc_y = int(np.floor((i[1] - self.catchment.settings["y0"]) /
+				self.catchment.settings["dy"]))
+			inlet_locs.append([loc_y, loc_x])
+
+		outlet_locs = []
+		for i in self.catchment.outlets:
+			loc_x = int(np.floor((i[0] - self.catchment.settings["x0"]) /
+				self.catchment.settings["dx"]))
+			loc_y = int(np.floor((i[1] - self.catchment.settings["y0"]) /
+				self.catchment.settings["dy"]))
+			outlet_locs.append([loc_y, loc_x])
+
+		for i in inlet_locs:
+			if self.network[i[0], i[1]] == 0.:
+				self.network[i[0], i[1]] = 1.
+
+		for i in outlet_locs:
+			if self.network[i[0], i[1]] == 0.:
+				self.network[i[0], i[1]] = 1.
+
+		self.network = np.flip(self.network, 0)
+
+		if self.flopymodel is not None:
+			if self.network.shape[0] != self.nrows:
+				raise ValueError(f"The network has {self.network.shape[0]} rows"
+					"but the model has {self.nrows} rows!")
+			if self.network.shape[1] != self.ncols:
+				raise ValueError(f"The network has {self.network.shape[1]}"
+					"columns but the model has {self.cols} columns!")
+
+		elev_network = self.network * self.elevations
+
+		for i in range(elev_network.shape[0]):
+			for j in range(elev_network.shape[1]):
+				if elev_network[i, j] == 0.:
+					continue
+				else:
+					if (i > 0 and
+						j > 0 and
+						i < elev_network.shape[0] - 1 and
+						j < elev_network.shape[1] - 1):
+
+						if (elev_network[i-1, j-1] != 0. or
+							elev_network[i-1, j+1] != 0. or
+							elev_network[i+1, j+1] != 0. or
+							elev_network[i+1, j-1] != 0.):
+
+							# up-left diagonal neighbor
+							if elev_network[i-1, j-1] != 0.:
+								if (elev_network[i-1, j] != 0. or
+									elev_network[i, j-1] != 0.):
+									pass
+								else:
+									fill_val = (elev_network[i, j] + elev_network[i-1, j-1]) / 2.
+									if np.random.random() >= 0.5:
+										elev_network[i-1, j] = fill_val
+									else:
+										elev_network[i, j-1] = fill_val
+
+							# up-right diagonal neighbor
+							if elev_network[i-1, j+1] != 0.:
+								if (elev_network[i-1, j] != 0. or
+									elev_network[i, j+1] != 0.):
+									pass
+								else:
+									fill_val = (elev_network[i, j] + elev_network[i-1, j+1]) / 2.
+									if np.random.random() >= 0.5:
+										elev_network[i-1, j] = fill_val
+									else:
+										elev_network[i, j+1] = fill_val
+
+							# down-right diagonal neighbor
+							if elev_network[i+1, j+1] != 0.:
+								if (elev_network[i+1, j] != 0. or
+									elev_network[i, j+1] != 0.):
+									pass
+								else:
+									fill_val = (elev_network[i, j] + elev_network[i+1, j+1]) / 2.
+									if np.random.random() >= 0.5:
+										elev_network[i+1, j] = fill_val
+									else:
+										elev_network[i, j+1] = fill_val
+
+							# down-left diagonal neighbor
+							if elev_network[i+1, j-1] != 0.:
+								if (elev_network[i+1, j] != 0. or
+									elev_network[i, j-1] != 0.):
+									pass
+								else:
+									fill_val = (elev_network[i, j] + elev_network[i+1, j-1]) / 2.
+									if np.random.random() >= 0.5:
+										elev_network[i+1, j] = fill_val
+									else:
+										elev_network[i, j-1] = fill_val
+
+						else:
+							continue
+
+		self.network = elev_network
 		self.valid = True
 		return self.network
