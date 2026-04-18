@@ -1,18 +1,23 @@
-Metadata-Version: 2.1
-Name: CFPy-TUD
+Metadata-Version: 2.4
+Name: CFPy_TUD
 Version: 0.0.2
-Summary: a Python package for the generation of MODFLOW-CFP specific input files (.cfp, .crch, .coc). CFPy is the FloPy-equivalent package for MODFLOW-CFP.
-Home-page: https://github.com/iGW-TU-Dresden/CFPy
-Author: M.G. Rudolph, T. Noffz, L. Grabow, T. Reimann
-Author-email: max_gustav.rudolph@tu-dresden.de, thomas.reimann@tu-dresden.de
-License: CC0 1.0 Universal
-Platform: Windows
-Platform: Linux
+Summary: A Python package for the generation of MODFLOW-CFP specific input files (.cfp, .crch, .coc). CFPy is the FloPy-equivalent package for MODFLOW-CFP.
+Author: T. Noffz, L. Grabow
+Author-email: "M.G. Rudolph" <max_gustav.rudolph@tu-dresden.de>, "T. Reimann" <thomas.reimann@tu-dresden.de>
+License: CC0-1.0
+Project-URL: Homepage, https://github.com/iGW-TU-Dresden/CFPy
 Classifier: Development Status :: 3 - Alpha
 Classifier: Intended Audience :: Science/Research
 Classifier: Intended Audience :: Other Audience
-Classifier: License :: OSI Approved :: MIT License
+Classifier: License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
 Classifier: Programming Language :: Python :: 3.9
 Classifier: Programming Language :: Python :: 3.10
 Classifier: Topic :: Scientific/Engineering :: Hydrology
+Requires-Python: <3.12,>=3.9
 License-File: LICENSE
+Requires-Dist: numpy<2.7,>=1.26.4
+Requires-Dist: matplotlib>=3.3.4
+Requires-Dist: pandas>=1.2.1
+Requires-Dist: flopy>=3.3.3
+Requires-Dist: watermark>=2.3.0
+Dynamic: license-file

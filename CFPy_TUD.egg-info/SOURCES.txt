@@ -1,6 +1,6 @@
 LICENSE
 README.md
-setup.py
+pyproject.toml
 CFPy/__init__.py
 CFPy/cfp/__init__.py
 CFPy/cfp/cfp.py
@@ -15,6 +15,12 @@ CFPy/utils/plots.py
 CFPy/utils/postprocessing.py
 CFPy/utils/preprocessing.py
 CFPy/utils/update_nam.py
+CFPy_Examples/EX10_CFPy_FloPy_pyKasso_GIS_PEST_stochastic/notebooks/00_Packages.py
+CFPy_Examples/EX10_CFPy_FloPy_pyKasso_GIS_PEST_stochastic/topic_func/__init__.py
+CFPy_Examples/EX10_CFPy_FloPy_pyKasso_GIS_PEST_stochastic/topic_func/folder_structure.py
+CFPy_Examples/EX10_CFPy_FloPy_pyKasso_GIS_PEST_stochastic/topic_func/multiple_networks.py
+CFPy_Examples/EX10_CFPy_FloPy_pyKasso_GIS_PEST_stochastic/topic_func/postprocess.py
+CFPy_Examples/EX10_CFPy_FloPy_pyKasso_GIS_PEST_stochastic/topic_func/str_grid_processing.py
 CFPy_TUD.egg-info/PKG-INFO
 CFPy_TUD.egg-info/SOURCES.txt
 CFPy_TUD.egg-info/dependency_links.txt
