@@ -4,3 +4,4 @@ build/*
 CFPy.egg-info/*
 CFPy_TUD.egg-info/*
 dist/*
+CLAUDE.md
