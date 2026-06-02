@@ -124,7 +124,7 @@ class RechargeParams:
         "gamma": 2., "simax": 1., "kv": 5., "omega": 0.2,
     }
     _BOUNDS = {
-        "srmax": (100., 500.), "lp": (0.1, 0.8), "ks": (100., 1000.),
+        "srmax": (100., 500.), "lp": (0.1, 0.8), "ks": (100., 5000.),
         "gamma": (1., 5.), "simax": (0.5, 10.), "kv": (0.1, 10.),
         "omega": (0.1, 0.9),
     }
@@ -228,7 +228,7 @@ class AquiferParams:
     _BOUNDS = {
         "hk": (1e-5, 1e-4),
         "ss": (1e-5, 1e-3),
-        "sy": (0.001, 0.1),
+        "sy": (0.01, 0.3),
     }
 
     def __init__(self, stochastic=True, values=None, bounds=None):
@@ -236,6 +236,21 @@ class AquiferParams:
         self.values = {**self._DEFAULTS, **(values or {})}
         self.bounds = {**self._BOUNDS, **(bounds or {})}
         self._samples = None
+
+
+# ── Network ───────────────────────────────────────────────────────────────────
+
+class Network:
+    """Outputs of the pyKasso network generation phase.
+
+    Passed to Groundwater.run_modflow / System.simulate_from_network to run
+    MODFLOW + CFP without repeating the (expensive) network generation step.
+    """
+
+    def __init__(self, validator, idxs_spring, idxs_inlet):
+        self.validator = validator      # GeneralValidator with valid_network inside
+        self.idxs_spring = idxs_spring  # [col, row, lay] 1-based MODFLOW indices
+        self.idxs_inlet = idxs_inlet    # list of [col, row, lay]
 
 
 # ── Groundwater ───────────────────────────────────────────────────────────────
@@ -299,21 +314,83 @@ class Groundwater:
 
     def simulate(self, system, recharge_ts, params: dict, proj_name, working_dir,
                  n_stress_periods=None, plot_network=False):
+        """Run pyKasso + MODFLOW + CFP (full pipeline)."""
+        if n_stress_periods is not None:
+            recharge_ts = recharge_ts[:n_stress_periods]
+        network = self._generate_network(
+            proj_name=proj_name,
+            sks_seed=int(params["sks_seed"]),
+            n_inlets=int(params["n_inlets"]),
+            inlets_seed=int(params["inlets_seed"]),
+            outlets_seed=int(params["outlets_seed"]),
+            fracture_families=params["fracture_families"],
+            n_rows=system.n_rows,
+            n_cols=system.n_cols,
+            delr=system.delr,
+            delc=system.delc,
+            lay_elevs=system.lay_elevs,
+            chb_spring=system.chb_spring,
+            working_dir=str(working_dir),
+            plot_network=plot_network,
+        )
+        return self._run_modflow(
+            network=network,
+            proj_name=proj_name,
+            recharge_ts=recharge_ts,
+            hk=float(params["hk"]),
+            ss=float(params["ss"]),
+            sy=float(params["sy"]),
+            k_exchange=float(params["k_exchange"]),
+            diameter=float(params["diameter"]),
+            rheight=float(params["rheight"]),
+            cad=float(params["cad"]),
+            n_rows=system.n_rows,
+            n_cols=system.n_cols,
+            n_lays=system.n_lays,
+            delr=system.delr,
+            delc=system.delc,
+            lay_elevs=system.lay_elevs,
+            chb_spring=system.chb_spring,
+            working_dir=str(working_dir),
+        )
+
+    def generate_network(self, system, params: dict, proj_name, working_dir,
+                         plot_network=False) -> "Network":
+        """Run the pyKasso network generation phase only.
+
+        Returns a Network object that can be passed to run_modflow later,
+        allowing many networks to be generated independently of MODFLOW runs.
         """
-        Run pyKasso + MODFLOW + CFP.
+        return self._generate_network(
+            proj_name=proj_name,
+            sks_seed=int(params["sks_seed"]),
+            n_inlets=int(params["n_inlets"]),
+            inlets_seed=int(params["inlets_seed"]),
+            outlets_seed=int(params["outlets_seed"]),
+            fracture_families=params["fracture_families"],
+            n_rows=system.n_rows,
+            n_cols=system.n_cols,
+            delr=system.delr,
+            delc=system.delc,
+            lay_elevs=system.lay_elevs,
+            chb_spring=system.chb_spring,
+            working_dir=str(working_dir),
+            plot_network=plot_network,
+        )
+
+    def run_modflow(self, system, network: "Network", recharge_ts, params: dict,
+                    proj_name, working_dir, n_stress_periods=None):
+        """Run MODFLOW + CFP given a pre-generated Network object.
 
         Parameters
         ----------
-        system : System
-        recharge_ts : np.ndarray  full recharge time series (mm/d)
+        network : Network
+            Output of generate_network / _generate_network.
+        recharge_ts : np.ndarray
+            Recharge time series (mm/d).
         params : dict
             Full parameter dict from System._get_params(). Must contain:
-            hk, ss, sy, k_exchange, diameter, rheight, cad, sks_seed,
-            n_inlets, inlets_seed, outlets_seed, fracture_families.
-        proj_name : str
-        working_dir : str or Path
-        n_stress_periods : int or None
-        plot_network : bool
+            hk, ss, sy, k_exchange, diameter, rheight, cad.
 
         Returns
         -------
@@ -323,22 +400,17 @@ class Groundwater:
         """
         if n_stress_periods is not None:
             recharge_ts = recharge_ts[:n_stress_periods]
-
-        return self._run(
+        return self._run_modflow(
+            network=network,
             proj_name=proj_name,
             recharge_ts=recharge_ts,
-            sks_seed=int(params["sks_seed"]),
             hk=float(params["hk"]),
-            k_exchange=float(params["k_exchange"]),
-            cad=float(params["cad"]),
-            diameter=float(params["diameter"]),
-            rheight=float(params["rheight"]),
             ss=float(params["ss"]),
             sy=float(params["sy"]),
-            n_inlets=int(params["n_inlets"]),
-            inlets_seed=int(params["inlets_seed"]),
-            outlets_seed=int(params["outlets_seed"]),
-            fracture_families=params["fracture_families"],
+            k_exchange=float(params["k_exchange"]),
+            diameter=float(params["diameter"]),
+            rheight=float(params["rheight"]),
+            cad=float(params["cad"]),
             n_rows=system.n_rows,
             n_cols=system.n_cols,
             n_lays=system.n_lays,
@@ -347,15 +419,12 @@ class Groundwater:
             lay_elevs=system.lay_elevs,
             chb_spring=system.chb_spring,
             working_dir=str(working_dir),
-            plot_network=plot_network,
         )
 
-    def _run(self, proj_name, recharge_ts, sks_seed, hk, k_exchange, cad,
-             diameter, rheight, ss, sy, n_inlets, inlets_seed, outlets_seed,
-             fracture_families, n_rows, n_cols, n_lays, delr, delc,
-             lay_elevs, chb_spring, working_dir, plot_network):
-
-        # ── pyKasso ───────────────────────────────────────────────────────────
+    def _generate_network(self, proj_name, sks_seed, n_inlets, inlets_seed,
+                          outlets_seed, fracture_families, n_rows, n_cols,
+                          delr, delc, lay_elevs, chb_spring, working_dir,
+                          plot_network=False) -> "Network":
         os.chdir(working_dir)
 
         dz = (lay_elevs[0] - lay_elevs[-1]) / self.nz
@@ -388,7 +457,6 @@ class Groundwater:
         np.random.seed(sks_seed)
         app.model.generate(model_parameters=model_parameters)
 
-        # ── Post-process pyKasso → CFPy inputs ────────────────────────────────
         network    = np.moveaxis(np.array(app.model.maps["karst"][0]), 1, 0)
         elevations = np.moveaxis(app.model.node_elev_arr, 1, 0)
         outlets    = np.moveaxis(app.model.maps["outlets"], 1, 0)
@@ -400,13 +468,11 @@ class Groundwater:
         validator = cfpy.preprocessing.GeneralValidator(
             network=network, elevations=elevations
         )
-        valid_network = validator.validate_network_elevations()
+        validator.validate_network_elevations()
 
-        # spring location (1-based MODFLOW indices: [col, row, lay])
         sp = np.argwhere(~np.isnan(outlets))[0]
         idxs_spring = [int(sp[1] + 1), int(sp[0] + 1), 1]
 
-        # inlet locations
         df = pd.DataFrame.from_dict(
             app.model.vectors["nodes"], orient="index",
             columns=["x", "y", "z", "type"],
@@ -417,15 +483,20 @@ class Groundwater:
             idxs_inlet.append([int(col[0]) + 1, n_rows - int(r[0]), 1])
 
         if plot_network:
-            self.plot_network(valid_network, idxs_inlet, idxs_spring,
-                              n_rows, n_cols)
+            self.plot_network(
+                validator.network, idxs_inlet, idxs_spring, n_rows, n_cols
+            )
 
+        return Network(validator, idxs_spring, idxs_inlet)
+
+    def _run_modflow(self, network: "Network", proj_name, recharge_ts, hk, ss, sy,
+                     k_exchange, diameter, rheight, cad, n_rows, n_cols, n_lays,
+                     delr, delc, lay_elevs, chb_spring, working_dir):
         lay_elevs_array = [
             np.ones((n_rows, n_cols)) * lay_elevs[0],
             np.ones((n_rows, n_cols)) * lay_elevs[1],
         ]
 
-        # ── MODFLOW setup ─────────────────────────────────────────────────────
         modflow_dir = os.path.join(working_dir, proj_name + "_modflow")
         os.makedirs(modflow_dir, exist_ok=True)
         os.chdir(modflow_dir)
@@ -433,7 +504,7 @@ class Groundwater:
         modelname = "pyKasso_example"
         mf = flopy.modflow.Modflow(modelname, exe_name=self.exe_name)
 
-        n_pers = len(recharge_ts) + 1  # 1 steady + n transient
+        n_pers = len(recharge_ts) + 1
         flopy.modflow.ModflowDis(
             mf, n_lays, n_rows, n_cols, n_pers,
             delr, delc, top=lay_elevs[0], botm=lay_elevs[1],
@@ -473,10 +544,9 @@ class Groundwater:
             rech[i + 1] = r / 86400 / 1000
         flopy.modflow.mfrch.ModflowRch(mf, nrchop=1, ipakcb=50, rech=rech)
 
-        # ── CFP setup ─────────────────────────────────────────────────────────
         mf.write_input()
-        validator.export_network()
-        validator.generate_nbr(
+        network.validator.export_network()
+        network.validator.generate_nbr(
             path=modflow_dir, nrows=n_rows, ncols=n_cols,
             nlays=n_lays, nplanes=1, layer_elevations=lay_elevs_array,
         )
@@ -498,9 +568,9 @@ class Groundwater:
         ]
 
         n_head = (np.ones(n_nodes) * -1).tolist()
-        if idxs_spring not in nbr_data[2]:
-            raise ValueError(f"Spring node {idxs_spring} not found in network.")
-        n_head[nbr_data[2].index(idxs_spring)] = chb_spring
+        if network.idxs_spring not in nbr_data[2]:
+            raise ValueError(f"Spring node {network.idxs_spring} not found in network.")
+        n_head[nbr_data[2].index(network.idxs_spring)] = chb_spring
 
         kex_data  = [nbr_data[0], (np.ones(n_nodes) * k_exchange).tolist()]
         cads_data = (np.ones(n_nodes) * cad).tolist()
@@ -521,7 +591,7 @@ class Groundwater:
         ).coc()
 
         p_crch = np.zeros(n_nodes).tolist()
-        for idx in idxs_inlet:
+        for idx in network.idxs_inlet:
             if idx not in nbr_data[2]:
                 raise ValueError(f"Inlet node {idx} not found in network.")
             p_crch[nbr_data[2].index(idx)] = 1.0
@@ -542,16 +612,13 @@ class Groundwater:
             cfp_unit_num=52, crch_unit_num=53, coc_unit_num=54,
         ).update_nam()
 
-        # ── Run ───────────────────────────────────────────────────────────────
         success, _ = mf.run_model(silent=True)
 
-        # ── Read heads ────────────────────────────────────────────────────────
         hds = bf.HeadFile(os.path.join(modflow_dir, f"{modelname}.hds"))
         heads = hds.get_alldata()
 
-        # ── Read spring discharge ─────────────────────────────────────────────
         node_arr = np.array(nbr_data[2])
-        idx = np.where((node_arr == idxs_spring).all(axis=1))[0] + 1
+        idx = np.where((node_arr == network.idxs_spring).all(axis=1))[0] + 1
         flows = pd.read_fwf(
             os.path.join(modflow_dir, f"NODE{str(idx[0]).zfill(8)}.OUT")
         )
@@ -759,6 +826,115 @@ class System:
         rch_params = [params[n] for n in RechargeParams.NAMES]
         return self.epikarst.simulate(self.data, rch_params)
 
+    # ── Simulate network only ─────────────────────────────────────────────────
+
+    def generate_network(self, random_state=None, working_dir=None, cleanup=True,
+                         plot_network=False) -> "Network":
+        """
+        Run the pyKasso network generation phase only.
+
+        Parameters
+        ----------
+        random_state : int or None
+            Row index into param_samples. None uses default parameters.
+        working_dir : str, Path, or None
+            Base directory for model files. Defaults to the vlab/ directory.
+        cleanup : bool
+            Remove the pyKasso run directory after generation.
+        plot_network : bool
+            Show a network plot after generation.
+
+        Returns
+        -------
+        network : Network
+            Validated network object; pass to simulate_from_network later.
+        """
+        params = self._get_params(random_state)
+
+        tag       = str(random_state) if random_state is not None else "default"
+        proj_name = f"{self.name}_{tag}"
+        base_dir  = str(working_dir) if working_dir is not None else str(_VLAB_DIR)
+        orig_dir  = os.getcwd()
+
+        try:
+            os.chdir(base_dir)
+            _flush_pykasso_loggers()
+            network = self.groundwater.generate_network(
+                system=self,
+                params=params,
+                proj_name=proj_name,
+                working_dir=base_dir,
+                plot_network=plot_network,
+            )
+        finally:
+            _flush_pykasso_loggers()
+            os.chdir(orig_dir)
+            if cleanup:
+                d = os.path.join(base_dir, proj_name + "_pyKasso")
+                if os.path.exists(d):
+                    shutil.rmtree(d)
+
+        return network
+
+    # ── Simulate from pre-generated network ───────────────────────────────────
+
+    def simulate_from_network(self, network: "Network", random_state=None,
+                              working_dir=None, cleanup=True):
+        """
+        Run MODFLOW + CFP given a pre-generated Network object.
+
+        Recharge is simulated internally using random_state, consistent with
+        how simulate_full works.
+
+        Parameters
+        ----------
+        network : Network
+            Output of generate_network.
+        random_state : int or None
+            Row index into param_samples (controls recharge + MODFLOW params).
+            None uses default parameters.
+        working_dir : str, Path, or None
+        cleanup : bool
+            Remove the MODFLOW run directory after the run.
+
+        Returns
+        -------
+        success : bool
+        Q_out   : pd.Series  spring discharge time series
+        heads   : np.ndarray  shape (n_pers, n_lays, n_rows, n_cols)
+        """
+        params = self._get_params(random_state)
+
+        rch_params = [params[n] for n in RechargeParams.NAMES]
+        rch_ts = self.epikarst.simulate(self.data, rch_params)
+
+        tag       = str(random_state) if random_state is not None else "default"
+        proj_name = f"{self.name}_{tag}"
+        base_dir  = str(working_dir) if working_dir is not None else str(_VLAB_DIR)
+        orig_dir  = os.getcwd()
+
+        try:
+            os.chdir(base_dir)
+            _flush_pykasso_loggers()
+            success, Q_out, heads = self.groundwater.run_modflow(
+                system=self,
+                network=network,
+                recharge_ts=rch_ts,
+                params=params,
+                proj_name=proj_name,
+                working_dir=base_dir,
+                n_stress_periods=self.n_stress_periods,
+            )
+        finally:
+            _flush_pykasso_loggers()
+            os.chdir(orig_dir)
+            if cleanup:
+                d = os.path.join(base_dir, proj_name + "_modflow")
+                if os.path.exists(d):
+                    shutil.rmtree(d)
+
+        return success, Q_out, heads
+
     # ── Simulate full ─────────────────────────────────────────────────────────
 
     def simulate_full(self, random_state=None, working_dir=None, cleanup=True,
@@ -783,39 +959,18 @@ class System:
         Q_out   : pd.Series  spring discharge time series
         heads   : np.ndarray shape (n_pers, n_lays, n_rows, n_cols)
         """
-        params = self._get_params(random_state)
-
-        rch_params = [params[n] for n in RechargeParams.NAMES]
-        rch_ts = self.epikarst.simulate(self.data, rch_params)
-
-        tag      = str(random_state) if random_state is not None else "default"
-        proj_name = f"{self.name}_{tag}"
-        base_dir  = str(working_dir) if working_dir is not None else str(_VLAB_DIR)
-        orig_dir  = os.getcwd()
-
-        try:
-            os.chdir(base_dir)
-            _flush_pykasso_loggers()
-
-            success, Q_out, heads = self.groundwater.simulate(
-                system=self,
-                recharge_ts=rch_ts,
-                params=params,
-                proj_name=proj_name,
-                working_dir=base_dir,
-                n_stress_periods=self.n_stress_periods,
-                plot_network=plot_network,
-            )
-        finally:
-            _flush_pykasso_loggers()
-            os.chdir(orig_dir)
-            if cleanup:
-                for suffix in ("_pyKasso", "_modflow"):
-                    d = os.path.join(base_dir, proj_name + suffix)
-                    if os.path.exists(d):
-                        shutil.rmtree(d)
-
-        return success, Q_out, heads
+        network = self.generate_network(
+            random_state=random_state,
+            working_dir=working_dir,
+            cleanup=cleanup,
+            plot_network=plot_network,
+        )
+        return self.simulate_from_network(
+            network=network,
+            random_state=random_state,
+            working_dir=working_dir,
+            cleanup=cleanup,
+        )
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
