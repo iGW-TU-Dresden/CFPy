@@ -368,7 +368,9 @@ class NetworkProperties:
 
     These parameters control how water flows through the conduit pipes
     (diameter, wall roughness) and how the conduit exchanges water with the
-    surrounding porous matrix (k_exchange, cad).
+    surrounding porous matrix (k_exchange, cad). The crch_fraction parameter
+    controls what fraction of the recharge at conduit inlet cells is routed
+    into the conduit rather than the matrix.
 
     Class attributes
     ----------------
@@ -385,27 +387,37 @@ class NetworkProperties:
         If True, parameters are sampled via LHS. If False, fixed values are used.
     values : dict, optional
         Override one or more default fixed values.
-        Keys: k_exchange, diameter, rheight, cad.
+        Keys: k_exchange, diameter, rheight, cad, crch_fraction.
     bounds : dict, optional
         Override one or more default sampling bounds.
+
+    Notes
+    -----
+    When stochastic=True (the default), crch_fraction is included in LHS
+    sampling with bounds (0.0, 1.0). To fix it at a specific value while
+    keeping other parameters stochastic, pass either:
+        bounds={"crch_fraction": (1.0, 1.0)}   # fix at 1.0
+    or construct with stochastic=False and set values={"crch_fraction": 1.0}.
     """
 
-    NAMES = ["k_exchange", "diameter", "rheight", "cad"]
+    NAMES = ["k_exchange", "diameter", "rheight", "cad", "crch_fraction"]
 
     # Default fixed parameter values
     _DEFAULTS = {
-        "k_exchange": 1e-4,  # conduit–matrix exchange coefficient (m/s)
-        "diameter":   0.5,   # conduit pipe diameter, applied to all pipes (m)
-        "rheight":    0.02,  # conduit wall roughness height (m)
-        "cad":        0.01,  # conduit storage coefficient (-)
+        "k_exchange":    1e-4,  # conduit–matrix exchange coefficient (m/s)
+        "diameter":      0.5,   # conduit pipe diameter, applied to all pipes (m)
+        "rheight":       0.02,  # conduit wall roughness height (m)
+        "cad":           0.01,  # conduit storage coefficient (-)
+        "crch_fraction": 1.0,   # fraction of inlet-cell recharge entering the conduit (-)
     }
 
     # Default LHS sampling bounds
     _BOUNDS = {
-        "k_exchange": (1e-5, 1e-4),
-        "diameter":   (0.1,  1.0),
-        "rheight":    (0.001, 0.1),
-        "cad":        (0.01, 0.5),
+        "k_exchange":    (1e-5, 1e-4),
+        "diameter":      (0.1,  1.0),
+        "rheight":       (0.001, 0.1),
+        "cad":           (0.01, 0.5),
+        "crch_fraction": (0.0, 1.0),
     }
 
     def __init__(self, stochastic=True, values=None, bounds=None):
@@ -546,6 +558,9 @@ class Groundwater:
     H_init : float
         Initial hydraulic head (m) assigned to all MODFLOW cells at the
         start of the simulation.
+    nstp : int
+        Number of time steps in each stress period. By default, each stress
+        period has a length of one day.
     mftol : float
         Head convergence criterion for the MODFLOW PCG solver (m). The
         solver stops iterating when the maximum head change between
@@ -582,13 +597,14 @@ class Groundwater:
         nz=10,
         vka_ratio=1.0,
         H_init=75.0,
-        mftol=1e-4,
+        nstp=1,
+        mftol=1e-8,
         mfrelax=0.98,
         mxiter=5000,
         tortuosity=1.0,
         lcritrey=500,
         hcritrey=5000,
-        cfptol=1e-5,
+        cfptol=1e-9,
         cfprelax=0.98,
         perlen=86400,
         time_unit=1,
@@ -597,6 +613,7 @@ class Groundwater:
         self.nz          = nz
         self.vka_ratio   = vka_ratio
         self.H_init      = H_init
+        self.nstp        = nstp
         self.mftol       = mftol
         self.mfrelax     = mfrelax
         self.mxiter      = mxiter
@@ -662,7 +679,7 @@ class Groundwater:
         plt.show()
 
     def simulate(self, system, recharge_ts, params: dict, proj_name, working_dir,
-                 n_stress_periods=None, plot_network=False):
+                 n_stress_periods=None, plot_network=False, routing_mode="both"):
         """
         Run the full pipeline: pyKasso network generation + MODFLOW + CFP.
 
@@ -738,6 +755,8 @@ class Groundwater:
             lay_elevs=system.lay_elevs,
             chb_spring=system.chb_spring,
             working_dir=str(working_dir),
+            routing_mode=routing_mode,
+            crch_fraction=float(params.get("crch_fraction", 1.0)),
         )
 
     def generate_network(self, system, params: dict, proj_name, working_dir,
@@ -786,7 +805,8 @@ class Groundwater:
         )
 
     def run_modflow(self, system, network: "Network", recharge_ts, params: dict,
-                    proj_name, working_dir, n_stress_periods=None):
+                    proj_name, working_dir, n_stress_periods=None,
+                    routing_mode="both"):
         """
         Run MODFLOW + CFP given a pre-generated Network object.
 
@@ -800,13 +820,16 @@ class Groundwater:
             Recharge time series (mm/d). One value per transient stress period.
         params : dict
             Full parameter dict from System._get_params(). Must contain:
-            hk, ss, sy, k_exchange, diameter, rheight, cad.
+            hk, ss, sy, k_exchange, diameter, rheight, cad, crch_fraction.
         proj_name : str
             Base name for the MODFLOW output directory.
         working_dir : str
             Path to the directory where MODFLOW files will be written.
         n_stress_periods : int or None
             If given, truncate recharge_ts to this many time steps.
+        routing_mode : str
+            Controls where recharge is applied. See System docstring for details.
+            'both' (default), 'matrix_only', or 'conduit_only'.
 
         Returns
         -------
@@ -840,6 +863,8 @@ class Groundwater:
             lay_elevs=system.lay_elevs,
             chb_spring=system.chb_spring,
             working_dir=str(working_dir),
+            routing_mode=routing_mode,
+            crch_fraction=float(params.get("crch_fraction", 1.0)),
         )
 
     def _generate_network(self, proj_name, sks_seed, n_inlets, inlets_seed,
@@ -1011,7 +1036,8 @@ class Groundwater:
 
     def _run_modflow(self, network: "Network", proj_name, recharge_ts, hk, ss, sy,
                      k_exchange, diameter, rheight, cad, n_rows, n_cols, n_lays,
-                     delr, delc, lay_elevs, chb_spring, working_dir):
+                     delr, delc, lay_elevs, chb_spring, working_dir,
+                     routing_mode="both", crch_fraction=1.0):
         """
         Internal method: set up and run a MODFLOW-CFP simulation.
 
@@ -1095,7 +1121,7 @@ class Groundwater:
         # --- DIS package: spatial and temporal discretisation ---
         # nstp: one internal time step per stress period
         # steady: period 0 is steady-state (1), all others are transient (0)
-        nstp_list   = [1] * n_pers
+        nstp_list   = [1] + [self.nstp] * (n_pers - 1)
         steady_list = [1] + [0] * (n_pers - 1)
 
         flopy.modflow.ModflowDis(
@@ -1132,7 +1158,8 @@ class Groundwater:
         # Save heads and print the water budget for every stress period
         oc_stress_period_data = {}
         for i in range(n_pers):
-            oc_stress_period_data[(i, 0)] = ["save head", "print budget"]
+            for j in range(nstp_list[i]):
+                oc_stress_period_data[(i, j)] = ["save head", "print budget"]
 
         flopy.modflow.ModflowOc(mf, stress_period_data=oc_stress_period_data)
 
@@ -1145,18 +1172,60 @@ class Groundwater:
         )
 
         # --- RCH package: distributed recharge ---
-        # Convert recharge from mm/d to m/s (MODFLOW internal units)
-        # The steady-state period uses the mean recharge to initialise the head field
-        rch_mean_m_per_s = np.mean(recharge_ts) / 86400 / 1000
+        # How recharge is spatially distributed depends on routing_mode:
+        #
+        #   'both' and 'matrix_only':
+        #       A single scalar rate is applied uniformly to the top active cell
+        #       of every column (nrchop=1). This is the standard MODFLOW approach.
+        #       In 'matrix_only' mode the CRCH fractions will be set to 0, so
+        #       no recharge reaches the conduit despite being in the RCH array.
+        #
+        #   'conduit_only':
+        #       A 2-D array (n_rows × n_cols) is used (nrchop=2), with non-zero
+        #       values only at the grid cells that contain a conduit inlet node.
+        #       All other cells receive zero recharge. The CRCH fraction at inlet
+        #       nodes is then set to 1.0 so the full cell recharge enters the conduit.
 
-        rech_dict = {}
-        rech_dict[0] = rch_mean_m_per_s  # stress period 0: steady-state warm-up
+        # Steady-state uses the mean of the transient recharge to initialise heads.
+        # Only compute the mean over non-zero values when in block mode, so that
+        # the long tail of zeros does not push the mean far below the pulse intensity.
+        rch_nonzero = recharge_ts[recharge_ts > 0]
+        rch_mean_for_ss = np.mean(rch_nonzero) if len(rch_nonzero) > 0 else 0.0
+        rch_mean_m_per_s = rch_mean_for_ss / 86400 / 1000
 
-        for i, r in enumerate(recharge_ts):
-            rch_m_per_s = r / 86400 / 1000
-            rech_dict[i + 1] = rch_m_per_s  # stress periods 1…n: daily transient recharge
+        if routing_mode in ("both", "matrix_only"):
+            # Uniform scalar rate applied to the whole grid
+            rech_dict = {}
+            rech_dict[0] = rch_mean_m_per_s  # stress period 0: steady-state warm-up
 
-        flopy.modflow.mfrch.ModflowRch(mf, nrchop=1, ipakcb=50, rech=rech_dict)
+            for i, r in enumerate(recharge_ts):
+                rch_m_per_s = r / 86400 / 1000
+                rech_dict[i + 1] = rch_m_per_s  # stress periods 1…n: daily transient
+
+            # nrchop=1: one uniform rate per stress period over the whole top layer
+            flopy.modflow.mfrch.ModflowRch(mf, nrchop=1, ipakcb=50, rech=rech_dict)
+
+        else:
+            # routing_mode == 'conduit_only':
+            # Build a 2-D recharge array (n_rows × n_cols) where all cells are zero
+            # except the cells that contain a conduit inlet node.
+            # Each element of network.idxs_inlet is [col_1based, row_1based, lay_1based].
+            # Convert to 0-based numpy indices: row_0 = inlet[1]-1, col_0 = inlet[0]-1.
+
+            def _inlet_rch_array(rate_m_per_s):
+                arr = np.zeros((n_rows, n_cols))
+                for inlet in network.idxs_inlet:
+                    arr[inlet[1] - 1, inlet[0] - 1] = rate_m_per_s
+                return arr
+
+            rech_dict = {}
+            rech_dict[0] = _inlet_rch_array(rch_mean_m_per_s)  # steady-state
+
+            for i, r in enumerate(recharge_ts):
+                rech_dict[i + 1] = _inlet_rch_array(r / 86400 / 1000)  # transient
+
+            # nrchop=2: MODFLOW reads one recharge value per top-layer cell
+            flopy.modflow.mfrch.ModflowRch(mf, nrchop=2, ipakcb=50, rech=rech_dict)
 
         # --- Write all MODFLOW input files to disk ---
         mf.write_input()
@@ -1233,15 +1302,49 @@ class Groundwater:
         ).coc()
 
         # --- Build the CRCH recharge fraction array ---
-        # p_crch defines what fraction of the total recharge each conduit node
-        # receives. Only sinkhole inlets receive recharge (fraction = 1.0);
-        # all other nodes are set to 0.
-        p_crch = np.zeros(n_nodes).tolist()
-        for idx in network.idxs_inlet:
-            if idx not in nbr_data[2]:
-                raise ValueError(f"Inlet node {idx} not found in network.")
-            inlet_node_position = nbr_data[2].index(idx)
-            p_crch[inlet_node_position] = 1.0
+        # p_crch[i] is the fraction of the MODFLOW RCH value in the cell that hosts
+        # conduit node i which is routed directly into that conduit node.
+        #
+        # Routing mode logic:
+        #   'both':         inlet nodes get crch_fraction; all other nodes get 0.
+        #                   crch_fraction=1.0 (the default) reproduces the original
+        #                   hard-coded behaviour.
+        #   'matrix_only':  all nodes get 0. No recharge reaches the conduit.
+        #   'conduit_only': inlet nodes get 1.0; all other nodes get 0.
+        #                   crch_fraction is ignored here because the RCH array
+        #                   already concentrates all recharge at the inlet cells,
+        #                   so p_crch=1.0 routes 100 % of that cell recharge into
+        #                   the conduit.
+
+        p_crch = np.zeros(n_nodes).tolist()  # start with all zeros
+
+        if routing_mode == "matrix_only":
+            # All p_crch remain 0: the conduit receives no recharge at all.
+            pass
+
+        elif routing_mode == "both":
+            # Each inlet node gets crch_fraction of its cell's RCH value.
+            for idx in network.idxs_inlet:
+                if idx not in nbr_data[2]:
+                    raise ValueError(
+                        f"Inlet node {idx} not found in the conduit network. "
+                        "This inlet was generated by pyKasso but has no matching "
+                        "conduit node in the NBR file."
+                    )
+                inlet_node_position = nbr_data[2].index(idx)
+                p_crch[inlet_node_position] = float(crch_fraction)
+
+        else:
+            # routing_mode == 'conduit_only':
+            # p_crch=1.0 at inlet nodes routes all of the spatially concentrated
+            # RCH into the conduit.
+            for idx in network.idxs_inlet:
+                if idx not in nbr_data[2]:
+                    raise ValueError(
+                        f"Inlet node {idx} not found in the conduit network."
+                    )
+                inlet_node_position = nbr_data[2].index(idx)
+                p_crch[inlet_node_position] = 1.0
 
         # --- Write the CRCH input file ---
         crch_str = cfpy.crch(
@@ -1359,7 +1462,8 @@ class System:
         Groundwater flow model. Defaults to Groundwater() with standard settings.
     n_stress_periods : int or None
         Number of transient stress periods to simulate. None uses the full
-        length of the recharge time series.
+        length of the recharge time series. Must be set (not None) when
+        recharge_source='block'.
     recharge_params : RechargeParams, optional
         Defaults to RechargeParams() with stochastic=True.
     network_structure : NetworkStructure, optional
@@ -1368,6 +1472,25 @@ class System:
         Defaults to NetworkProperties() with stochastic=True.
     aquifer_params : AquiferParams, optional
         Defaults to AquiferParams() with stochastic=True.
+    recharge_source : str
+        'epikarst' (default) runs the FlexModelFrac epikarst model.
+        'block' uses a simple rectangular pulse of fixed intensity followed
+        by zeros, with total length equal to n_stress_periods.
+    block_intensity : float
+        Recharge rate during the block pulse (mm/d). Only used when
+        recharge_source='block'.
+    block_length : int
+        Number of time steps the block pulse lasts. Must be <= n_stress_periods.
+        Only used when recharge_source='block'.
+    routing_mode : str
+        Controls where recharge is applied in the model:
+        'both' (default): uniform RCH to all matrix cells, plus a fraction
+            (crch_fraction from NetworkProperties) of each inlet cell's
+            recharge is routed directly into the conduit.
+        'matrix_only': uniform RCH to all matrix cells, no conduit recharge
+            (CRCH fractions all set to 0).
+        'conduit_only': RCH is zero everywhere except the inlet (sinkhole)
+            grid cells; all of that recharge goes to the conduit (p_crch=1).
     """
 
     def __init__(
@@ -1388,6 +1511,10 @@ class System:
         network_structure=None,
         network_properties=None,
         aquifer_params=None,
+        recharge_source="epikarst",
+        block_intensity=10.0,
+        block_length=30,
+        routing_mode="both",
     ):
         # --- Grid geometry ---
         self.name             = name
@@ -1441,6 +1568,26 @@ class System:
             self.aquifer_params = aquifer_params
         else:
             self.aquifer_params = AquiferParams()
+
+        # --- Recharge source ---
+        _valid_sources = {"epikarst", "block"}
+        if recharge_source not in _valid_sources:
+            raise ValueError(
+                f"recharge_source must be one of {_valid_sources}, "
+                f"got '{recharge_source}'."
+            )
+        self.recharge_source = recharge_source
+        self.block_intensity = float(block_intensity)
+        self.block_length    = int(block_length)
+
+        # --- Recharge routing mode ---
+        _valid_modes = {"both", "matrix_only", "conduit_only"}
+        if routing_mode not in _valid_modes:
+            raise ValueError(
+                f"routing_mode must be one of {_valid_modes}, "
+                f"got '{routing_mode}'."
+            )
+        self.routing_mode = routing_mode
 
         # LHS parameter table — generated lazily the first time param_samples is accessed
         self._param_samples: pd.DataFrame | None = None
@@ -1610,25 +1757,56 @@ class System:
 
     def simulate_recharge(self, random_state=None) -> np.ndarray:
         """
-        Simulate the epikarst recharge time series for one parameter realisation.
+        Simulate the recharge time series for one parameter realisation.
+
+        When recharge_source='epikarst', runs the FlexModelFrac epikarst model
+        on the loaded climate data and returns total (slow + quick) recharge.
+
+        When recharge_source='block', returns a rectangular pulse: block_intensity
+        (mm/d) for block_length steps, then zeros for the remaining
+        n_stress_periods - block_length steps. n_stress_periods must be set and
+        must be >= block_length. The random_state parameter is ignored in block
+        mode because there are no stochastic recharge parameters.
 
         Parameters
         ----------
         random_state : int or None
-            Row index into param_samples. None uses the default recharge parameters.
+            Row index into param_samples. Used only when recharge_source='epikarst'.
 
         Returns
         -------
-        rch_ts : np.ndarray, shape (len(data.prec),)
-            Total recharge (slow + quick) for the study period (mm/d).
+        rch_ts : np.ndarray, shape (n_steps,)
+            Total recharge (mm/d). Length equals n_stress_periods in block mode
+            and len(data.prec) in epikarst mode (before any truncation by
+            n_stress_periods in the groundwater model).
         """
-        # Get the full parameter dict for this realisation
-        params = self._get_params(random_state)
+        if self.recharge_source == "block":
+            # Validate that the full simulation length has been specified
+            if self.n_stress_periods is None:
+                raise ValueError(
+                    "n_stress_periods must be set when recharge_source='block'. "
+                    "Set it in System(..., n_stress_periods=N)."
+                )
+            if self.block_length > self.n_stress_periods:
+                raise ValueError(
+                    f"block_length ({self.block_length}) exceeds "
+                    f"n_stress_periods ({self.n_stress_periods}). "
+                    "The pulse cannot be longer than the simulation period."
+                )
+            # Rectangular pulse followed by zeros to fill the full simulation period
+            block = np.full(self.block_length, self.block_intensity)
+            tail  = np.zeros(self.n_stress_periods - self.block_length)
+            return np.concatenate([block, tail])
 
-        # Extract only the recharge model parameters in the order FlexModelFrac expects
-        rch_params = [params[name] for name in RechargeParams.NAMES]
+        else:
+            # recharge_source == "epikarst" (the default)
+            # Get the full parameter dict for this realisation
+            params = self._get_params(random_state)
 
-        return self.epikarst.simulate(self.data, rch_params)
+            # Extract only the recharge model parameters in the order FlexModelFrac expects
+            rch_params = [params[name] for name in RechargeParams.NAMES]
+
+            return self.epikarst.simulate(self.data, rch_params)
 
     # ── Simulate network only ─────────────────────────────────────────────────
 
@@ -1727,9 +1905,11 @@ class System:
         """
         params = self._get_params(random_state)
 
-        # Simulate the recharge time series for this realisation
-        rch_params = [params[name] for name in RechargeParams.NAMES]
-        rch_ts = self.epikarst.simulate(self.data, rch_params)
+        # Simulate the recharge time series for this realisation.
+        # Using simulate_recharge() here (rather than calling epikarst directly)
+        # ensures that block mode is respected when simulate_from_network() is
+        # called on its own, without going through simulate_full().
+        rch_ts = self.simulate_recharge(random_state)
 
         # Build run tag and directory paths
         tag       = str(random_state) if random_state is not None else "default"
@@ -1754,6 +1934,7 @@ class System:
                 proj_name=proj_name,
                 working_dir=base_dir,
                 n_stress_periods=self.n_stress_periods,
+                routing_mode=self.routing_mode,
             )
         finally:
             # Always restore the working directory and release logger file locks
