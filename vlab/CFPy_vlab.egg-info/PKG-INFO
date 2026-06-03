@@ -1,0 +1,15 @@
+Metadata-Version: 2.4
+Name: CFPy-vlab
+Version: 0.1.0
+Summary: Virtual karst laboratory built on top of CFPy_TUD.
+Author-email: "M.G. Rudolph" <max_gustav.rudolph@tu-dresden.de>
+License: CC0-1.0
+Project-URL: Homepage, https://github.com/iGW-TU-Dresden/CFPy
+Requires-Python: <3.12,>=3.9
+Requires-Dist: CFPy_TUD>=0.0.2
+Requires-Dist: pykasso
+Requires-Dist: scipy>=1.7
+Requires-Dist: numpy<2.7,>=1.26.4
+Requires-Dist: pandas>=1.2.1
+Requires-Dist: matplotlib>=3.3.4
+Requires-Dist: flopy>=3.3.3

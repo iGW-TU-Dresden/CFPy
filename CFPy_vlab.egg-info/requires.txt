@@ -1,0 +1,7 @@
+CFPy_TUD>=0.0.2
+pykasso
+scipy>=1.7
+numpy<2.7,>=1.26.4
+pandas>=1.2.1
+matplotlib>=3.3.4
+flopy>=3.3.3

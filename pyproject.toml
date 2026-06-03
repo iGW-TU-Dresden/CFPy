@@ -36,6 +36,7 @@ Homepage = "https://github.com/iGW-TU-Dresden/CFPy"
 
 [tool.setuptools.packages.find]
 where = ["."]
+exclude = ["vlab*"]
 
 [tool.ruff]
 line-length = 120

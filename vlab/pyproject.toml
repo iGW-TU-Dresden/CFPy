@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "CFPy-vlab"
+version = "0.1.0"
+description = "Virtual karst laboratory built on top of CFPy_TUD."
+authors = [
+    { name = "M.G. Rudolph", email = "max_gustav.rudolph@tu-dresden.de" },
+]
+license = { text = "CC0-1.0" }
+requires-python = ">=3.9,<3.12"
+dependencies = [
+    "CFPy_TUD>=0.0.2",
+    "pykasso",
+    "scipy>=1.7",
+    "numpy>=1.26.4,<2.7",
+    "pandas>=1.2.1",
+    "matplotlib>=3.3.4",
+    "flopy>=3.3.3",
+]
+
+[project.urls]
+Homepage = "https://github.com/iGW-TU-Dresden/CFPy"
+
+[tool.setuptools.packages.find]
+where = [".."]
+include = ["vlab*"]
+
+[tool.setuptools.package-data]
+vlab = ["*.csv"]

@@ -12,7 +12,7 @@ import flopy
 import flopy.utils.binaryfile as bf
 from scipy.stats import qmc
 
-from recharge import FlexModelFrac
+from .recharge import FlexModelFrac
 
 # ── Default fracture families ─────────────────────────────────────────────────
 
@@ -853,7 +853,7 @@ class System:
 
         tag       = str(random_state) if random_state is not None else "default"
         proj_name = f"{self.name}_{tag}"
-        base_dir  = str(working_dir) if working_dir is not None else str(_VLAB_DIR)
+        base_dir  = str(working_dir) if working_dir is not None else str(Path.cwd())
         orig_dir  = os.getcwd()
 
         try:
@@ -910,7 +910,7 @@ class System:
 
         tag       = str(random_state) if random_state is not None else "default"
         proj_name = f"{self.name}_{tag}"
-        base_dir  = str(working_dir) if working_dir is not None else str(_VLAB_DIR)
+        base_dir  = str(working_dir) if working_dir is not None else str(Path.cwd())
         orig_dir  = os.getcwd()
 
         try:
