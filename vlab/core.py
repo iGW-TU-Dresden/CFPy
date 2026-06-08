@@ -678,7 +678,7 @@ class Groundwater:
         ax.set_ylim(-0.5, n_rows - 0.5)
         plt.show()
 
-    def simulate(self, system, recharge_ts, params: dict, proj_name, working_dir,
+    def simulate(self, system, recharge_ts, ss_rch, params: dict, proj_name, working_dir,
                  n_stress_periods=None, plot_network=False, routing_mode="both"):
         """
         Run the full pipeline: pyKasso network generation + MODFLOW + CFP.
@@ -693,6 +693,9 @@ class Groundwater:
             The parent System object (provides grid dimensions, elevations, etc.).
         recharge_ts : np.ndarray
             Recharge time series (mm/d). One value per transient stress period.
+        ss_rch : float
+            The steady-state recharge flux (mm/d). If None, the mean value
+            of the recharge time series is used instead.
         params : dict
             Full parameter dict from System._get_params().
         proj_name : str
@@ -740,6 +743,7 @@ class Groundwater:
             network=network,
             proj_name=proj_name,
             recharge_ts=recharge_ts,
+            ss_rch=ss_rch,
             hk=float(params["hk"]),
             ss=float(params["ss"]),
             sy=float(params["sy"]),
@@ -804,7 +808,7 @@ class Groundwater:
             plot_network=plot_network,
         )
 
-    def run_modflow(self, system, network: "Network", recharge_ts, params: dict,
+    def run_modflow(self, system, network: "Network", recharge_ts, ss_rch, params: dict,
                     proj_name, working_dir, n_stress_periods=None,
                     routing_mode="both"):
         """
@@ -847,6 +851,7 @@ class Groundwater:
         return self._run_modflow(
             network=network,
             proj_name=proj_name,
+            ss_rch=ss_rch,
             recharge_ts=recharge_ts,
             hk=float(params["hk"]),
             ss=float(params["ss"]),
@@ -1034,7 +1039,7 @@ class Groundwater:
 
         return Network(validator, idxs_spring, idxs_inlet)
 
-    def _run_modflow(self, network: "Network", proj_name, recharge_ts, hk, ss, sy,
+    def _run_modflow(self, network: "Network", proj_name, ss_rch, recharge_ts, hk, ss, sy,
                      k_exchange, diameter, rheight, cad, n_rows, n_cols, n_lays,
                      delr, delc, lay_elevs, chb_spring, working_dir,
                      routing_mode="both", crch_fraction=1.0):
@@ -1058,6 +1063,9 @@ class Groundwater:
         recharge_ts : np.ndarray
             Recharge time series (mm/d). Length sets the number of transient
             stress periods.
+        ss_rch : float
+            The steady-state recharge flux (mm/d). If None, the mean value
+            of the recharge time series is used instead.
         hk : float
             Horizontal hydraulic conductivity of the rock matrix (m/s).
         ss : float
@@ -1186,12 +1194,14 @@ class Groundwater:
         #       All other cells receive zero recharge. The CRCH fraction at inlet
         #       nodes is then set to 1.0 so the full cell recharge enters the conduit.
 
-        # Steady-state uses the mean of the transient recharge to initialise heads.
-        # Only compute the mean over non-zero values when in block mode, so that
-        # the long tail of zeros does not push the mean far below the pulse intensity.
-        rch_nonzero = recharge_ts[recharge_ts > 0]
-        rch_mean_for_ss = np.mean(rch_nonzero) if len(rch_nonzero) > 0 else 0.0
-        rch_mean_m_per_s = rch_mean_for_ss / 86400 / 1000
+        # Steady-state uses the given intensity.
+        if ss_rch is not None:
+            rch_mean_for_ss = ss_rch if ss_rch > 0 else 0.0
+            rch_mean_m_per_s = rch_mean_for_ss / 86400 / 1000
+        else:
+            rch_mean_for_ss = np.mean(recharge_ts)
+            rch_mean_for_ss = rch_mean_for_ss if rch_mean_for_ss > 0. else 0.0
+            rch_mean_m_per_s = rch_mean_for_ss / 86400 / 1000
 
         if routing_mode in ("both", "matrix_only"):
             # Uniform scalar rate applied to the whole grid
@@ -1199,7 +1209,7 @@ class Groundwater:
             rech_dict[0] = rch_mean_m_per_s  # stress period 0: steady-state warm-up
 
             for i, r in enumerate(recharge_ts):
-                rch_m_per_s = r / 86400 / 1000
+                rch_m_per_s = r / 86400 / 1000 # convert from mm/d to m/s
                 rech_dict[i + 1] = rch_m_per_s  # stress periods 1…n: daily transient
 
             # nrchop=1: one uniform rate per stress period over the whole top layer
@@ -1476,6 +1486,9 @@ class System:
         'epikarst' (default) runs the FlexModelFrac epikarst model.
         'block' uses a simple rectangular pulse of fixed intensity followed
         by zeros, with total length equal to n_stress_periods.
+    ss_rch : float
+        The steady-state recharge intensity (mm/d). If it is None, the mean
+        of the recharge time series (or block) is used instead.
     block_intensity : float
         Recharge rate during the block pulse (mm/d). Only used when
         recharge_source='block'.
@@ -1508,6 +1521,7 @@ class System:
         groundwater=None,
         n_stress_periods=None,
         recharge_params=None,
+        ss_rch=None,
         network_structure=None,
         network_properties=None,
         aquifer_params=None,
@@ -1578,6 +1592,12 @@ class System:
             )
         self.recharge_source = recharge_source
         self.block_intensity = float(block_intensity)
+
+        if ss_rch is not None:
+            self.ss_rch = float(ss_rch)
+        else:
+            self.ss_rch = None
+
         self.block_length    = int(block_length)
 
         # --- Recharge routing mode ---
@@ -1930,6 +1950,7 @@ class System:
                 system=self,
                 network=network,
                 recharge_ts=rch_ts,
+                ss_rch=self.ss_rch,
                 params=params,
                 proj_name=proj_name,
                 working_dir=base_dir,
