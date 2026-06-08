@@ -53,17 +53,23 @@ _VLAB_DIR = Path(__file__).parent
 
 class Data:
     """
-    Container for daily precipitation and evapotranspiration time series.
+    Container for precipitation and evapotranspiration time series.
 
-    Both series must be pandas Series objects with a DatetimeIndex and
-    daily frequency. Values are expected in mm/d.
+    Both series must be pandas Series objects with a DatetimeIndex. The
+    expected time step and units depend on the temporal_resolution setting
+    of the System that owns this Data object:
+
+    - 'daily'  (default): daily frequency, values in mm/d
+    - 'hourly': hourly frequency, values in mm/h
 
     Attributes
     ----------
     prec : pd.Series
-        Daily precipitation (mm/d), DatetimeIndex.
+        Precipitation time series, DatetimeIndex.
+        Units: mm/d (daily) or mm/h (hourly).
     evap : pd.Series
-        Daily potential evapotranspiration (mm/d), DatetimeIndex.
+        Potential evapotranspiration time series, DatetimeIndex.
+        Units: mm/d (daily) or mm/h (hourly).
     """
 
     def __init__(self, prec: pd.Series, evap: pd.Series):
@@ -71,22 +77,25 @@ class Data:
         Parameters
         ----------
         prec : pd.Series
-            Daily precipitation time series (mm/d).
+            Precipitation time series (mm/d for daily, mm/h for hourly).
         evap : pd.Series
-            Daily potential evapotranspiration time series (mm/d).
+            Potential evapotranspiration time series (mm/d for daily, mm/h for hourly).
         """
         self.prec = prec
         self.evap = evap
 
     @classmethod
-    def from_csv(cls, prec_path, evap_path):
+    def from_csv(cls, prec_path, evap_path, temporal_resolution="daily"):
         """
         Load precipitation and evapotranspiration time series from CSV files.
 
         Both files must be semicolon-separated with a date column as the first
         column (day-first format, e.g. 01.01.2000). For precipitation, rain
         values are read from the third column (index 2). Precipitation is
-        resampled to daily totals before use.
+        first resampled to daily totals; if temporal_resolution='hourly', the
+        daily values are then uniformly disaggregated to hourly by distributing
+        each day's total evenly across 24 hours (each hour receives 1/24 of
+        the daily amount).
 
         Parameters
         ----------
@@ -94,11 +103,15 @@ class Data:
             Path to the precipitation CSV file.
         evap_path : str or Path
             Path to the evapotranspiration CSV file.
+        temporal_resolution : str
+            'daily' (default) or 'hourly'. Controls the time step of the
+            returned Series and the units (mm/d or mm/h respectively).
 
         Returns
         -------
         Data
-            A new Data instance with daily prec and evap Series.
+            A new Data instance with prec and evap Series at the requested
+            temporal resolution.
         """
         # Read precipitation — only the date column (0) and rain amount column (2)
         prec_raw = pd.read_csv(
@@ -109,10 +122,6 @@ class Data:
             usecols=[0, 2],
             dayfirst=True,
         )
-        # Resample to daily totals (handles sub-daily input gracefully)
-        prec_daily = prec_raw.resample("D").sum()
-        # Convert the single-column DataFrame to a plain 1-D Series
-        prec = prec_daily.squeeze()
 
         # Read evapotranspiration — full file, date as index
         evap_raw = pd.read_csv(
@@ -122,23 +131,56 @@ class Data:
             sep=";",
             dayfirst=True,
         )
-        # Convert the single-column DataFrame to a plain 1-D Series
-        evap = evap_raw.squeeze()
+
+        # Resample to the target time step by summing within each period.
+        # For daily mode this aggregates any sub-daily input to daily totals.
+        # For hourly mode this aggregates any sub-hourly input to hourly totals,
+        # and leaves truly hourly input unchanged.
+        if temporal_resolution == "hourly":
+            resample_rule = "h"
+        else:
+            resample_rule = "D"
+
+        prec = prec_raw.resample(resample_rule).sum().squeeze()
+        evap = evap_raw.resample(resample_rule).sum().squeeze()
 
         return cls(prec, evap)
 
     @classmethod
-    def default(cls):
+    def default(cls, temporal_resolution="daily"):
         """
         Load the default climate data bundled with the vlab package.
 
-        Reads prec.csv and evap.csv from the vlab/ directory.
+        Reads prec.csv and evap.csv from the vlab/ directory. The bundled
+        files contain daily data. For temporal_resolution='hourly', each
+        daily value is disaggregated uniformly to 24 hourly values so that
+        summing any 24 consecutive hours recovers the original daily total.
+
+        Parameters
+        ----------
+        temporal_resolution : str
+            'daily' (default) or 'hourly'.
 
         Returns
         -------
         Data
         """
-        return cls.from_csv(_VLAB_DIR / "prec.csv", _VLAB_DIR / "evap.csv")
+        # Always load as daily first — that is the native resolution of the
+        # bundled CSVs.
+        daily = cls.from_csv(
+            _VLAB_DIR / "prec.csv",
+            _VLAB_DIR / "evap.csv",
+            temporal_resolution="daily",
+        )
+
+        if temporal_resolution == "hourly":
+            # Disaggregate: forward-fill each day's value to all 24 hours,
+            # then divide by 24 so each hour carries 1/24 of the daily total.
+            prec = daily.prec.resample("h").ffill() / 24
+            evap = daily.evap.resample("h").ffill() / 24
+            return cls(prec, evap)
+
+        return daily
 
 
 # ── Epikarst ──────────────────────────────────────────────────────────────────
@@ -174,23 +216,41 @@ class Epikarst:
         self.n_tiles = n_tiles
         self._model = FlexModelFrac()
 
-    def simulate(self, data: Data, rch_params) -> np.ndarray:
+    def simulate(self, data: Data, rch_params,
+                 temporal_resolution="daily") -> np.ndarray:
         """
         Simulate total recharge (slow + quick) for the study period.
+
+        The FlexModelFrac model operates internally with all fluxes expressed
+        as mm/d rates and a time step dt expressed as a fraction of a day.
+        This keeps the model parameters (ks, kv, etc.) in mm/d regardless of
+        the chosen temporal resolution, and the output is always in mm/d.
+
+        For hourly input (mm/h), values are first multiplied by 24 to convert
+        them to mm/d rates, and the model is integrated with dt = 1/24 so that
+        each hourly sub-step advances the soil storage by the correct amount.
+        The output recharge values are also in mm/d (instantaneous daily-rate
+        equivalents at each hourly time step).
 
         Parameters
         ----------
         data : Data
-            Climate input (prec and evap as daily Series).
+            Climate input. For temporal_resolution='daily', prec and evap are
+            expected in mm/d. For 'hourly', they are expected in mm/h.
         rch_params : array-like, shape (7,)
             Model parameters in order:
             [srmax, lp, ks, gamma, simax, kv, omega].
+            All rate parameters (ks, kv) are in mm/d regardless of resolution.
             See RechargeParams for units and meaning.
+        temporal_resolution : str
+            'daily' (default) or 'hourly'. Controls the time step passed to
+            FlexModelFrac and the unit conversion applied to the climate input.
 
         Returns
         -------
         rch_ts : np.ndarray, shape (len(data.prec),)
-            Total recharge (slow + quick) for the study period (mm/d).
+            Total recharge (slow + quick) for the study period.
+            Always in mm/d (instantaneous daily-rate equivalent per time step).
         """
         # Length of the actual study period (before tiling)
         n = len(data.prec)
@@ -199,11 +259,23 @@ class Epikarst:
         prec_tiled = np.tile(data.prec.values.ravel(), self.n_tiles)
         evap_tiled = np.tile(data.evap.values.ravel(), self.n_tiles)
 
+        if temporal_resolution == "hourly":
+            # Convert mm/h rates to mm/d so all FlexModelFrac parameters
+            # (ks, kv in mm/d) remain in consistent units.
+            # dt=1/24 ensures each hourly step integrates 1/24 of a day's
+            # worth of flux into the soil storage.
+            prec_tiled = prec_tiled * 24
+            evap_tiled = evap_tiled * 24
+            dt = 1.0 / 24.0
+        else:
+            dt = 1.0
+
         # Run the epikarst model over the full tiled input
         rch_slow, rch_quick = self._model.simulate(
             prec=prec_tiled,
             evap=evap_tiled,
             p=np.array(rch_params),
+            dt=dt,
         )
 
         # Add slow and quick components to get total recharge
@@ -1482,6 +1554,15 @@ class System:
         Defaults to NetworkProperties() with stochastic=True.
     aquifer_params : AquiferParams, optional
         Defaults to AquiferParams() with stochastic=True.
+    temporal_resolution : str
+        'daily' (default) or 'hourly'. Sets the time step for the full
+        simulation pipeline. With 'daily', each MODFLOW stress period is
+        86400 s (one day) and climate data are expected in mm/d. With
+        'hourly', each stress period is 3600 s (one hour) and climate data
+        are expected in mm/h. The MODFLOW recharge package always receives
+        rates in m/s; the conversion factor (/ 86400 / 1000) is the same
+        for both resolutions because recharge is internally always kept as
+        an instantaneous mm/d rate.
     recharge_source : str
         'epikarst' (default) runs the FlexModelFrac epikarst model.
         'block' uses a simple rectangular pulse of fixed intensity followed
@@ -1525,6 +1606,7 @@ class System:
         network_structure=None,
         network_properties=None,
         aquifer_params=None,
+        temporal_resolution="daily",
         recharge_source="epikarst",
         block_intensity=10.0,
         block_length=30,
@@ -1546,11 +1628,21 @@ class System:
         else:
             self.lay_elevs = [50.0, 0.0]
 
+        # --- Temporal resolution ---
+        _valid_resolutions = {"daily", "hourly"}
+        if temporal_resolution not in _valid_resolutions:
+            raise ValueError(
+                f"temporal_resolution must be one of {_valid_resolutions}, "
+                f"got '{temporal_resolution}'."
+            )
+        self.temporal_resolution = temporal_resolution
+
         # --- Sub-model components ---
         if data is not None:
             self.data = data
         else:
-            self.data = Data.default()
+            # Load the default climate data at the correct temporal resolution
+            self.data = Data.default(temporal_resolution=self.temporal_resolution)
 
         if epikarst is not None:
             self.epikarst = epikarst
@@ -1561,6 +1653,11 @@ class System:
             self.groundwater = groundwater
         else:
             self.groundwater = Groundwater()
+
+        # Hourly mode requires 3600 s stress periods instead of the default 86400 s.
+        # Override perlen here so the user does not have to set it manually.
+        if self.temporal_resolution == "hourly":
+            self.groundwater.perlen = 3600
 
         # --- Parameter groups ---
         if recharge_params is not None:
@@ -1826,7 +1923,11 @@ class System:
             # Extract only the recharge model parameters in the order FlexModelFrac expects
             rch_params = [params[name] for name in RechargeParams.NAMES]
 
-            return self.epikarst.simulate(self.data, rch_params)
+            return self.epikarst.simulate(
+                self.data,
+                rch_params,
+                temporal_resolution=self.temporal_resolution,
+            )
 
     # ── Simulate network only ─────────────────────────────────────────────────
 
