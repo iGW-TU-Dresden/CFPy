@@ -85,76 +85,14 @@ class Data:
         self.evap = evap
 
     @classmethod
-    def from_csv(cls, prec_path, evap_path, temporal_resolution="daily"):
-        """
-        Load precipitation and evapotranspiration time series from CSV files.
-
-        Both files must be semicolon-separated with a date column as the first
-        column (day-first format, e.g. 01.01.2000). For precipitation, rain
-        values are read from the third column (index 2). Precipitation is
-        first resampled to daily totals; if temporal_resolution='hourly', the
-        daily values are then uniformly disaggregated to hourly by distributing
-        each day's total evenly across 24 hours (each hour receives 1/24 of
-        the daily amount).
-
-        Parameters
-        ----------
-        prec_path : str or Path
-            Path to the precipitation CSV file.
-        evap_path : str or Path
-            Path to the evapotranspiration CSV file.
-        temporal_resolution : str
-            'daily' (default) or 'hourly'. Controls the time step of the
-            returned Series and the units (mm/d or mm/h respectively).
-
-        Returns
-        -------
-        Data
-            A new Data instance with prec and evap Series at the requested
-            temporal resolution.
-        """
-        # Read precipitation — only the date column (0) and rain amount column (2)
-        prec_raw = pd.read_csv(
-            prec_path,
-            parse_dates=True,
-            index_col=[0],
-            sep=";",
-            usecols=[0, 2],
-            dayfirst=True,
-        )
-
-        # Read evapotranspiration — full file, date as index
-        evap_raw = pd.read_csv(
-            evap_path,
-            parse_dates=True,
-            index_col=[0],
-            sep=";",
-            dayfirst=True,
-        )
-
-        # Resample to the target time step by summing within each period.
-        # For daily mode this aggregates any sub-daily input to daily totals.
-        # For hourly mode this aggregates any sub-hourly input to hourly totals,
-        # and leaves truly hourly input unchanged.
-        if temporal_resolution == "hourly":
-            resample_rule = "h"
-        else:
-            resample_rule = "D"
-
-        prec = prec_raw.resample(resample_rule).sum().squeeze()
-        evap = evap_raw.resample(resample_rule).sum().squeeze()
-
-        return cls(prec, evap)
-
-    @classmethod
     def default(cls, temporal_resolution="daily"):
         """
         Load the default climate data bundled with the vlab package.
 
         Reads prec.csv and evap.csv from the vlab/ directory. The bundled
-        files contain daily data. For temporal_resolution='hourly', each
-        daily value is disaggregated uniformly to 24 hourly values so that
-        summing any 24 consecutive hours recovers the original daily total.
+        files contain hourly or daily data. If the temporal resolution is
+        set to daily, the originally hourly data is aggregated to daily
+        values through a re-sample using the sum of hourly values.
 
         Parameters
         ----------
@@ -165,22 +103,40 @@ class Data:
         -------
         Data
         """
-        # Always load as daily first — that is the native resolution of the
-        # bundled CSVs.
-        daily = cls.from_csv(
+        # Read precipitation — only the date column (0) and rain amount column (2)
+        prec_raw = pd.read_csv(
             _VLAB_DIR / "prec.csv",
+            parse_dates=True,
+            index_col=[0],
+            sep=";",
+            usecols=[0, 2],
+            dayfirst=True,
+        ).squeeze()
+
+        # Read evapotranspiration — full file, date as index
+        evap_raw = pd.read_csv(
             _VLAB_DIR / "evap.csv",
-            temporal_resolution="daily",
-        )
+            parse_dates=True,
+            index_col=[0],
+            sep=";",
+            dayfirst=True,
+        ).squeeze()
 
+        # evap data is originally in daily resolution. Linear interpolation
+        # and subsequent transformation to mm/h (from mm/d) is a very rough
+        # but good-enough proxy here.
         if temporal_resolution == "hourly":
-            # Disaggregate: forward-fill each day's value to all 24 hours,
-            # then divide by 24 so each hour carries 1/24 of the daily total.
-            prec = daily.prec.resample("h").ffill() / 24
-            evap = daily.evap.resample("h").ffill() / 24
-            return cls(prec, evap)
+            data = cls(
+                prec_raw.resample("h").sum().squeeze(),
+                evap_raw.resample("h").interpolate() / 24.
+            )
+        elif temporal_resolution == "daily":
+            data = cls(
+                prec_raw.resample("D").sum().squeeze(),
+                evap_raw.resample("D").sum().squeeze()
+            )
 
-        return daily
+        return data
 
 
 # ── Epikarst ──────────────────────────────────────────────────────────────────
