@@ -25,6 +25,18 @@ See the beginning of the individual example notebooks for more information on `P
 
 This installs `CFPy` quickly and easily, however, without `pyKasso`. For instructions on how to install `pyKasso` as well, see below.
 
+### The *new* easy way (including pyKasso)
+> [!TIP]
+> Since the availability of the [new pyKasso version](https://github.com/randlab/pyKasso), the recommended way of installing CFPy has changed. We recommend following the instructions from [pyKasso](https://github.com/randlab/pyKasso) to set up a new environment, install pyKasso, clone or download the CFPy repository and then install CFPy-vlab locally.
+
+- Go to [pyKasso](https://github.com/randlab/pyKasso) and follow the instructions on how to set up `pyKasso`
+- Download the `CFPy` source code [here](https://github.com/iGW-TU-Dresden/CFPy/tree/main) (e.g., press the green `Code` button, download as ZIP and unpack)
+- Open a terminal / command prompt (with Python installed and the previously created `pyKasso`-environment active)
+- Locally install the `CFpy` package from the source code
+    + Navigate to the previously downloaded `CFPy` source code (the directory where you can also find this `README.md`)
+    + Navigate to the `vlab` directory
+    + Install `CFPy-vlab` (which automatically installs `CFPy`): `python -m pip install .`
+
 ## The custom way
 The installation is described specifically for using the [Anaconda distribution](https://www.anaconda.com/products/distribution) of Python / using `conda` environments. If you encounter an OpenSSL-related error during one of the following steps, go to `.../anaconda3/lib/bin`, copy `libcrypto-1_1-x64.dll` and `libssl-1_1-x64.dll` and paste them to `.../anaconda3/dlls`, and continue regularly afterwards.
 ### Installation of `CFPy` only (without `pyKasso`)

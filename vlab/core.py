@@ -492,15 +492,15 @@ class AquiferParams:
 
     # Default fixed parameter values
     _DEFAULTS = {
-        "hk": 1e-4,  # horizontal hydraulic conductivity of the rock matrix (m/s)
-        "ss": 1e-4,  # specific storage (1/m) — elastic storage under confined conditions
-        "sy": 0.01,  # specific yield (-) — drainable porosity under unconfined conditions
+        "hk": 1e-2,  # horizontal hydraulic conductivity of the rock matrix (m/s)
+        "ss": 1e-7,  # specific storage (1/m) — elastic storage under confined conditions
+        "sy": 0.1,  # specific yield (-) — drainable porosity under unconfined conditions
     }
 
     # Default LHS sampling bounds
     _BOUNDS = {
-        "hk": (1e-5, 1e-4),
-        "ss": (1e-5, 1e-3),
+        "hk": (1e-4, 1e0),
+        "ss": (1e-8, 1e-4),
         "sy": (0.01, 0.3),
     }
 
