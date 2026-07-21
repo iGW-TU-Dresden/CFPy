@@ -173,7 +173,8 @@ class Epikarst:
         self._model = FlexModelFrac()
 
     def simulate(self, data: Data, rch_params,
-                 temporal_resolution="daily") -> np.ndarray:
+                 temporal_resolution="daily",
+                 return_components=False) -> np.ndarray:
         """
         Simulate total recharge (slow + quick) for the study period.
 
@@ -201,12 +202,20 @@ class Epikarst:
         temporal_resolution : str
             'daily' (default) or 'hourly'. Controls the time step passed to
             FlexModelFrac and the unit conversion applied to the climate input.
+        return_components : bool
+            The function returns the combined recharge signal (quick +
+            diffuse recharge) if False (default) or returns both signals
+            separately if True.
 
         Returns
         -------
-        rch_ts : np.ndarray, shape (len(data.prec),)
+        rch_ts : np.ndarray, shape (len(data.prec),) or (len(data.prec), 2)
             Total recharge (slow + quick) for the study period.
             Always in mm/d (instantaneous daily-rate equivalent per time step).
+            Has shape (len(data.prec),) if return_components is False and
+            shape (len(data.prec), 2) if return_components is True (with
+            diffuse recharge in the first and quick recharge in the
+            second column).
         """
         # Length of the actual study period (before tiling)
         n = len(data.prec)
@@ -234,11 +243,20 @@ class Epikarst:
             dt=dt,
         )
 
-        # Add slow and quick components to get total recharge
-        rch_total = rch_slow + rch_quick
+        if not return_components:
+            # Add slow and quick components to get total recharge
+            rch_total = rch_slow + rch_quick
 
-        # Discard the warmup tiles; return only the last n time steps
-        return rch_total[n * (self.n_tiles - 1):]
+            # Discard the warmup tiles; return only the last n time steps
+            return rch_total[n * (self.n_tiles - 1):]
+        else:
+            # Construct array
+            rch_total = np.column_stack((rch_slow, rch_quick))
+
+            # Discard the warmup tiles; return only the last n time steps
+            return rch_total[n * (self.n_tiles - 1):, :]
+
+
 
 
 # ── Parameter groups ──────────────────────────────────────────────────────────
@@ -707,7 +725,8 @@ class Groundwater:
         plt.show()
 
     def simulate(self, system, recharge_ts, ss_rch, params: dict, proj_name, working_dir,
-                 n_stress_periods=None, plot_network=False, routing_mode="both"):
+                 n_stress_periods=None, plot_network=False, routing_mode="both",
+                 flat_network=False):
         """
         Run the full pipeline: pyKasso network generation + MODFLOW + CFP.
 
@@ -734,6 +753,10 @@ class Groundwater:
             If given, truncate recharge_ts to this many time steps.
         plot_network : bool
             If True, show a plot of the generated conduit network.
+        flat_network : bool
+            If True, make the network completely flat (all nodes have same
+            elevation equal to the node head BC). If False, use the pyKasso
+            elevations and project everything into one MODFLOW layer.
 
         Returns
         -------
@@ -764,6 +787,7 @@ class Groundwater:
             chb_spring=system.chb_spring,
             working_dir=str(working_dir),
             plot_network=plot_network,
+            flat_network=flat_network,
         )
 
         # Step 2: run MODFLOW + CFP on the generated network
@@ -792,7 +816,7 @@ class Groundwater:
         )
 
     def generate_network(self, system, params: dict, proj_name, working_dir,
-                         plot_network=False) -> "Network":
+                         plot_network=False, flat_network=False) -> "Network":
         """
         Run only the pyKasso network generation phase.
 
@@ -812,6 +836,10 @@ class Groundwater:
             Path to the directory where the pyKasso project will be created.
         plot_network : bool
             If True, show a plot of the generated network.
+        flat_network : bool
+            If True, make the network completely flat (all nodes have same
+            elevation equal to the node head BC). If False, use the pyKasso
+            elevations and project everything into one MODFLOW layer.
 
         Returns
         -------
@@ -834,6 +862,7 @@ class Groundwater:
             chb_spring=system.chb_spring,
             working_dir=str(working_dir),
             plot_network=plot_network,
+            flat_network=flat_network,
         )
 
     def run_modflow(self, system, network: "Network", recharge_ts, ss_rch, params: dict,
@@ -903,7 +932,7 @@ class Groundwater:
     def _generate_network(self, proj_name, sks_seed, n_inlets, inlets_seed,
                           outlets_seed, fracture_families, n_rows, n_cols,
                           delr, delc, lay_elevs, chb_spring, working_dir,
-                          plot_network=False) -> "Network":
+                          plot_network=False, flat_network=False) -> "Network":
         """
         Internal method: run pyKasso to generate and validate a karst network.
 
@@ -948,6 +977,10 @@ class Groundwater:
             Directory where the pyKasso project folder will be created.
         plot_network : bool
             If True, show a map of the generated conduit network.
+        flat_network : bool
+            If True, make the network completely flat (all nodes have same
+            elevation equal to the node head BC). If False, use the pyKasso
+            elevations and project everything into one MODFLOW layer.
 
         Returns
         -------
@@ -1019,6 +1052,9 @@ class Groundwater:
         network_2d    = np.max(network_3d,    axis=-1)[::-1, :]
         elevations_2d = np.max(elevations_3d, axis=-1)[::-1, :]
         outlets_2d    = np.nanmax(outlets_3d, axis=-1)[::-1, :]
+
+        if flat_network:
+            elevations_2d = np.ones_like(elevations_2d) * chb_spring
 
         # --- Validate the network using CFPy ---
         # GeneralValidator checks that conduit node elevations are consistent
@@ -1124,6 +1160,16 @@ class Groundwater:
             Fixed hydraulic head assigned to the spring outlet node (m).
         working_dir : str
             Directory where MODFLOW files will be written.
+        routing_mode : str
+            How recharge is applied. "matrix_only" only applies recharge to
+            regular matrix cells (not to inlet cells), "conduit_only" only
+            applies recharge to the inlet cells, "both" applies recharge to
+            all cells. Default is "both".
+        crch_fraction : float
+            The fraction of recharge from the RCH package that is directly
+            routed into the conduits (see CFP CRCH package). Only has an
+            effect at inlet cells. Default is 1.0 (all recharge from the
+            RCH package at inlet cells is directly routed into conduits). 
 
         Returns
         -------
@@ -1828,7 +1874,8 @@ class System:
 
     # ── Simulate recharge ─────────────────────────────────────────────────────
 
-    def simulate_recharge(self, random_state=None) -> np.ndarray:
+    def simulate_recharge(self, random_state=None,
+                          return_components=False) -> np.ndarray:
         """
         Simulate the recharge time series for one parameter realisation.
 
@@ -1845,6 +1892,11 @@ class System:
         ----------
         random_state : int or None
             Row index into param_samples. Used only when recharge_source='epikarst'.
+        return_components : bool
+            The function returns the combined recharge signal (quick +
+            diffuse recharge) if False (default) or returns both signals
+            separately if True. This option has no effect if the recharge
+            source is 'block'.
 
         Returns
         -------
@@ -1883,12 +1935,13 @@ class System:
                 self.data,
                 rch_params,
                 temporal_resolution=self.temporal_resolution,
+                return_components=return_components,
             )
 
     # ── Simulate network only ─────────────────────────────────────────────────
 
     def generate_network(self, random_state=None, working_dir=None, cleanup=True,
-                         plot_network=False) -> "Network":
+                         plot_network=False, flat_network=False) -> "Network":
         """
         Run only the pyKasso network generation phase.
 
@@ -1906,6 +1959,10 @@ class System:
             If True, delete the pyKasso run directory after generation.
         plot_network : bool
             If True, show a map of the generated conduit network.
+        flat_network : bool
+            If True, make the network completely flat (all nodes have same
+            elevation equal to the node head BC). If False, use the pyKasso
+            elevations and project everything into one MODFLOW layer.
 
         Returns
         -------
@@ -1936,6 +1993,7 @@ class System:
                 proj_name=proj_name,
                 working_dir=base_dir,
                 plot_network=plot_network,
+                flat_network=flat_network,
             )
         finally:
             # Always restore the working directory and release logger file locks,
@@ -2028,7 +2086,7 @@ class System:
     # ── Simulate full ─────────────────────────────────────────────────────────
 
     def simulate_full(self, random_state=None, working_dir=None, cleanup=True,
-                      plot_network=False):
+                      plot_network=False, flat_network=False):
         """
         Run the complete simulation pipeline for one parameter realisation.
 
@@ -2047,6 +2105,10 @@ class System:
             If True, remove pyKasso and MODFLOW run directories after the simulation.
         plot_network : bool
             If True, show a map of the generated conduit network.
+        flat_network : bool
+            If True, make the network completely flat (all nodes have same
+            elevation equal to the node head BC). If False, use the pyKasso
+            elevations and project everything into one MODFLOW layer.
 
         Returns
         -------
@@ -2063,6 +2125,7 @@ class System:
             working_dir=working_dir,
             cleanup=cleanup,
             plot_network=plot_network,
+            flat_network=flat_network,
         )
 
         # Step 3: run MODFLOW + CFP on the generated network
