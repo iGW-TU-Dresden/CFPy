@@ -298,11 +298,11 @@ class RechargeParams:
     _DEFAULTS = {
         "srmax":  250.,   # maximum soil reservoir capacity (mm)
         "lp":     0.25,   # fraction of srmax below which ET is limited (-)
-        "ks":     1000.,  # slow drainage coefficient from the soil store (mm/d)
-        "gamma":  2.,     # non-linearity exponent for slow drainage (-)
-        "simax":  1.,     # maximum interception storage capacity (mm)
-        "kv":     5.,     # fast bypass drainage coefficient through the epikarst (mm/d)
-        "omega":  0.2,    # fraction of soil drainage routed as quick flow to conduits (-)
+        "ks":     100.,  # slow drainage coefficient from the soil store (mm/d)
+        "gamma":  1.5,     # non-linearity exponent for slow drainage (-)
+        "simax":  2.,     # maximum interception storage capacity (mm)
+        "kv":     1.,     # crop factor (multiplier of evapo(transpi)ration), (-)
+        "omega":  0.3,    # fraction of soil drainage routed as quick flow to conduits (-)
     }
 
     # Default LHS sampling bounds (used when stochastic=True)
@@ -452,8 +452,8 @@ class NetworkProperties:
     _DEFAULTS = {
         "k_exchange":    1e-4,  # conduit–matrix exchange coefficient (m/s)
         "diameter":      0.5,   # conduit pipe diameter, applied to all pipes (m)
-        "rheight":       0.02,  # conduit wall roughness height (m)
-        "cad":           0.01,  # conduit storage coefficient (-)
+        "rheight":       0.05,  # conduit wall roughness height (m)
+        "cad":           0.1,  # conduit storage coefficient (-)
         "crch_fraction": 1.0,   # fraction of inlet-cell recharge entering the conduit (-)
     }
 
@@ -1006,32 +1006,63 @@ class Groundwater:
         app.visualizer.notebook = True
 
         # --- Define all model generation parameters ---
-        model_parameters = {
-            "sks": {
-                "seed": sks_seed,
-                "algorithm": "Riemann3",  # 3-D Riemann skeletonisation
-                "ratio": 0.1,             # fraction of domain nodes used for the skeleton
-            },
-            "domain": {
-                # Bedrock surface: flat at z=0 (bottom of the domain)
-                "bedrock": np.zeros((n_cols, n_rows)),
-                # Water table: flat at the spring head elevation
-                "water_table": np.full((n_cols, n_rows), chb_spring),
-            },
-            "outlets": {
-                "seed": outlets_seed,
-                "number": 1,
-                "subdomain": "domain_borders_bottom",  # spring is at the aquifer boundary
-            },
-            "inlets": {
-                "number": n_inlets,
-                "seed": inlets_seed,
-                "subdomain": "domain_surface",  # sinkholes are at the land surface
-            },
-            "fractures": {
-                "generate": fracture_families,
-            },
-        }
+        # the structzure depends on whether we have a 3D network or a 2D network
+        if self.nz > 1:
+            model_parameters = {
+                        "sks": {
+                            "seed": sks_seed,
+                            "algorithm": "Riemann3",  # 3-D Riemann skeletonisation
+                            "ratio": 0.1,             # fraction of domain nodes used for the skeleton
+                        },
+                        "domain": {
+                            # Bedrock surface: flat at z=0 (bottom of the domain)
+                            "bedrock": np.zeros((n_cols, n_rows)),
+                            # Water table: flat at the spring head elevation
+                            "water_table": np.full((n_cols, n_rows), chb_spring),
+                        },
+                        "outlets": {
+                            "seed": outlets_seed,
+                            "number": 1,
+                            "subdomain": "domain_borders_bottom",  # spring is at the aquifer boundary
+                        },
+                        "inlets": {
+                            "number": n_inlets,
+                            "seed": inlets_seed,
+                            "subdomain": "domain_surface",  # sinkholes are at the land surface
+                        },
+                        "fractures": {
+                            "generate": fracture_families,
+                        },
+                    }
+        else:
+            # if 2D pyKasso, manually create spring node at center of right
+            # side boundary face
+            model_parameters = {
+                        "sks": {
+                            "seed": sks_seed,
+                            "algorithm": "Riemann3",  # 3-D Riemann skeletonisation
+                            "ratio": 0.1,             # fraction of domain nodes used for the skeleton
+                        },
+                        # "outlets": {
+                        #     "data": [[
+                        #         grid_parameters["x0"] + (n_cols - 1) * delr, # right side
+                        #         grid_parameters["y0"] + ((n_rows - 1) // 2) * delc # center in y direction
+                        #     ]],
+                        #     "number": 1,
+                        # },
+                        "outlets": {
+                            "seed": outlets_seed,
+                            "number": 1,
+                            "subdomain": "domain_borders_sides",  # spring is at the aquifer boundary
+                        },
+                        "inlets": {
+                            "number": n_inlets,
+                            "seed": inlets_seed,
+                        },
+                        "fractures": {
+                            "generate": fracture_families,
+                        },
+                    }
 
         # Fix the numpy random seed for full reproducibility of the pyKasso run
         np.random.seed(sks_seed)
@@ -1053,7 +1084,7 @@ class Groundwater:
         elevations_2d = np.max(elevations_3d, axis=-1)[::-1, :]
         outlets_2d    = np.nanmax(outlets_3d, axis=-1)[::-1, :]
 
-        if flat_network:
+        if flat_network or self.nz == 1:
             elevations_2d = np.ones_like(elevations_2d) * chb_spring
 
         # --- Validate the network using CFPy ---
