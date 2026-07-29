@@ -1495,7 +1495,18 @@ class Groundwater:
 
         # CFP writes one output file per node: NODE########.OUT (8-digit zero-padded)
         node_filename = f"NODE{str(spring_node_number).zfill(8)}.OUT"
-        flows = pd.read_fwf(os.path.join(modflow_dir, node_filename))
+
+        cols = ["TOTIM (T)", "HCON", "HMAT", "QDIR", "QWELL", "QMAT", "QCADS<->CON",
+        "QTUB1", "QTUB2", "QTUB3", "QTUB4", "QTUB5", "QTUB6", "NSTOR", "QFIX",
+        "QLH", "FHLQ (LQ)", "CAUCHY", "CAUCHY (LQ)",
+        "BREAK-DOWN CADS FLOW  QCADS<->CON", "Q_CDSSTO", "Q_CDSRCH"]
+        # read file skipping the header
+        # the header sometimes breaks the formatting, so we skip it and
+        # define the column names later 
+        flows = pd.read_fwf(os.path.join(modflow_dir, node_filename),
+                            skiprows=1, header=None, columns=cols)
+        # define columns
+        flows.columns = cols
 
         # Spring discharge is the sum of all flow components at the spring node:
         #   QMAT:  exchange flux from the surrounding rock matrix
@@ -1503,7 +1514,7 @@ class Groundwater:
         #   QTUB1–QTUB6: inflow from up to 6 connected conduit pipe segments
         Q_out = (
             flows["QMAT"]
-            + flows["QCADS"]
+            + flows["QCADS<->CON"]
             + flows["QTUB1"]
             + flows["QTUB2"]
             + flows["QTUB3"]

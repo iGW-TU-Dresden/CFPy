@@ -25,17 +25,42 @@ See the beginning of the individual example notebooks for more information on `P
 
 This installs `CFPy` quickly and easily, however, without `pyKasso`. For instructions on how to install `pyKasso` as well, see below.
 
-### The *new* easy way (including pyKasso)
+### The *new* easy way (including the *new* pyKasso)
 > [!TIP]
 > Since the availability of the [new pyKasso version](https://github.com/randlab/pyKasso), the recommended way of installing CFPy has changed. We recommend following the instructions from [pyKasso](https://github.com/randlab/pyKasso) to set up a new environment, install pyKasso, clone or download the CFPy repository and then install CFPy-vlab locally.
+
+> [!CAUTION]
+> Currently, the new pyKasso version is **not** compatible with the old version of pyKasso. This means that the standard CFPy examples will not work with the new version of pyKasso. The examples in CFPy-vlab, however, **will work** with the new version of pyKasso (but not with the old version).
 
 - Go to [pyKasso](https://github.com/randlab/pyKasso) and follow the instructions on how to set up `pyKasso`
 - Download the `CFPy` source code [here](https://github.com/iGW-TU-Dresden/CFPy/tree/main) (e.g., press the green `Code` button, download as ZIP and unpack)
 - Open a terminal / command prompt (with Python installed and the previously created `pyKasso`-environment active)
-- Locally install the `CFpy` package from the source code
+- Locally install the `CFPy` package from the source code
     + Navigate to the previously downloaded `CFPy` source code (the directory where you can also find this `README.md`)
     + Navigate to the `vlab` directory
     + Install `CFPy-vlab` (which automatically installs `CFPy`): `python -m pip install .`
+
+### Making pyKasso fully compatible with CFPy-vlab
+> [!CAUTION]
+> To make the new version of pyKasso fully compatible with CFPy-vlab, you need to manually make a change to the pyKasso source code (we're working in making this change available in pyKasso by default).
+
+- navigate to `pyKasso/model/sks.py`
+- find the function `_voxelize_karst_network`
+- add / replace the following:
+```
+### Retrieve indices and voxelize
+coords = np.vstack([X, Y, Z])
+i, j, k = self.grid.get_indices(coords.T)
+new_karst = np.zeros_like(self.grid.data_volume)
+new_karst[i, j, k] = 1
+self.maps['karst'][self.iteration] = new_karst
+
+### Build elevation array: store Z-coordinate at each voxelized cell
+node_elev_arr = np.zeros_like(self.grid.data_volume, dtype=float)
+node_elev_arr[i, j, k] = Z
+self.node_elev_arr = node_elev_arr
+return None
+```
 
 ## The custom way
 The installation is described specifically for using the [Anaconda distribution](https://www.anaconda.com/products/distribution) of Python / using `conda` environments. If you encounter an OpenSSL-related error during one of the following steps, go to `.../anaconda3/lib/bin`, copy `libcrypto-1_1-x64.dll` and `libssl-1_1-x64.dll` and paste them to `.../anaconda3/dlls`, and continue regularly afterwards.
