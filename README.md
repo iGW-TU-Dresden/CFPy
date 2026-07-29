@@ -32,6 +32,9 @@ This installs `CFPy` quickly and easily, however, without `pyKasso`. For instruc
 > [!CAUTION]
 > Currently, the new pyKasso version is **not** compatible with the old version of pyKasso. This means that the standard CFPy examples will not work with the new version of pyKasso. The examples in CFPy-vlab, however, **will work** with the new version of pyKasso (but not with the old version).
 
+> [!IMPORTANT]
+> Make sure to always use the CFPv2-version available in this repository. Otherwise, CFP output file readers may not work.
+
 - Go to [pyKasso](https://github.com/randlab/pyKasso) and follow the instructions on how to set up `pyKasso`
 - Download the `CFPy` source code [here](https://github.com/iGW-TU-Dresden/CFPy/tree/main) (e.g., press the green `Code` button, download as ZIP and unpack)
 - Open a terminal / command prompt (with Python installed and the previously created `pyKasso`-environment active)
